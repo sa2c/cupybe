@@ -9,7 +9,7 @@ from collections import namedtuple
 
 CallTreeNode = namedtuple('CallTreeNode',
                           ['fname', 'cnode_id', 'parent', 'children'])
-CallTreeNode.__repr__ = None  # A recursive structure
+CallTreeNode.__repr__ = lambda x : calltree_to_repr(x)
 
 CallTreeLine = namedtuple('CallTreeLine', ['fname', 'cnode_id', 'level'])
 
@@ -46,6 +46,17 @@ def calltree_to_string(root, line_prefix='', max_len=60):
     return res
 
 
+def calltree_to_repr(root):
+    '''
+    An implementation for '__repr__'
+    '''
+    lines = calltree_to_string(root).split('\n')
+    res = lines[:5] + ['...'] + lines[-6:]
+    l = max(len(line) for line in res)
+    res = ['','='*l] + res + ['='*l,''] 
+    return '\n'.join(res)
+
+
 def get_max_len(root):
     '''
     For nicer printing. Not very precise.
@@ -54,12 +65,12 @@ def get_max_len(root):
         len(child.fname) for child in root.children)
 
 
-def get_full_paths_from_id(root, parent_full_callpath=''):
+def get_fpath_vs_id(root, parent_full_callpath=''):
     import pandas as pd
     full_callpath = parent_full_callpath + root.fname
     data = [(root.cnode_id, full_callpath)]
     for child in root.children:
-        data += get_full_paths_from_id(child, full_callpath + '/')
+        data += get_fpath_vs_id(child, full_callpath + '/')
     return data
 
 
@@ -137,3 +148,37 @@ def get_cube_dump_w_text(profile_file):
     return cube_dump_process.stdout
 
 
+def calltree_to_df2(calltree):
+    """
+    Returns a df with 4 columns:
+    - full callpath
+    - function name
+    - cnode id
+    - parent cnode id
+    """
+    # full callpath vs cnode id for convenience
+    import pandas as pd
+    data = get_fpath_vs_id(calltree)
+    fullpath_vs_id = pd.DataFrame(data, columns=['Cnode ID', 'Full Callpath'])
+
+    # function name, cnode_id, parent_cnode_id
+    fname_id_parentid = calltree_to_df(calltree)
+
+    df_repr = fullpath_vs_id.merge(
+        right=fname_id_parentid, how='inner', on='Cnode ID')
+
+    return df_repr
+
+def get_all_info(profile_file):
+    """
+    Typical use case, gets all the information regarding the calltree
+    in different formats.
+    """
+    # "call tree" object
+    cube_dump_w_text = get_cube_dump_w_text(profile_file)
+    call_tree_lines = get_call_tree_lines(cube_dump_w_text)
+    calltree = calltree_from_lines(call_tree_lines)
+
+    df_repr = calltree_to_df2(calltree)
+
+    return {'calltree': calltree, 'df': df_repr}
