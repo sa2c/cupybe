@@ -9,25 +9,27 @@ from collections import namedtuple
 
 CallTreeNode = namedtuple('CallTreeNode',
                           ['fname', 'cnode_id', 'parent', 'children'])
-CallTreeNode.__repr__ = lambda x : calltree_to_repr(x)
+CallTreeNode.__repr__ = lambda x: calltree_to_repr(x)
 
 CallTreeLine = namedtuple('CallTreeLine', ['fname', 'cnode_id', 'level'])
 
 
 def iterate_on_call_tree(root):
+    '''Iterator on a tree.'''
     yield root
     for child in root.children:
         yield from iterate_on_call_tree(child)
 
 
 def calltree_to_df(call_tree):
+    '''Convert a call tree into a DataFrame.'''
     import pandas as pd
     tuples = [(n.fname, n.cnode_id,
                n.parent.cnode_id if n.parent is not None else pd.NA)
               for n in iterate_on_call_tree(call_tree)]
 
-    df = pd.DataFrame(
-        data=tuples, columns=['Function Name', 'Cnode ID', 'Parent Cnode ID'])
+    df = pd.DataFrame(data=tuples,
+                      columns=['Function Name', 'Cnode ID', 'Parent Cnode ID'])
     return df
 
 
@@ -53,7 +55,7 @@ def calltree_to_repr(root):
     lines = calltree_to_string(root).split('\n')
     res = lines[:5] + ['...'] + lines[-6:]
     l = max(len(line) for line in res)
-    res = ['','='*l] + res + ['='*l,''] 
+    res = ['', '=' * l] + res + ['=' * l, '']
     return '\n'.join(res)
 
 
@@ -66,7 +68,9 @@ def get_max_len(root):
 
 
 def get_fpath_vs_id(root, parent_full_callpath=''):
-    import pandas as pd
+    '''
+    Returns a list of (Cnode ID, full call path) tuples.
+    '''
     full_callpath = parent_full_callpath + root.fname
     data = [(root.cnode_id, full_callpath)]
     for child in root.children:
@@ -76,6 +80,9 @@ def get_fpath_vs_id(root, parent_full_callpath=''):
 
 def parse_line(line):
     '''                             
+    Parse a line in the call tree graph output by 'cube_dump -w'
+    returning the name, the node id and the level.
+
     INPUT:
     '    |-MPI_Finalize  [ ( id=163,   mod=), -1, -1, paradigm=mpi, role=function, url=, descr=, mode=MPI]'
     OUTPUT:
@@ -95,11 +102,15 @@ def parse_line(line):
 
 
 def get_call_tree_lines(cube_dump_w_text):
+    '''
+    Select the lines relative to the call tree out of the
+    output of 'cube_dump -w.
+    '''
     lines = cube_dump_w_text.split('\n')
-    call_tree_start_line_idx = next(
-        i for i, l in enumerate(lines) if 'CALL TREE' in l)
-    call_tree_stop_line_idx = next(
-        i for i, l in enumerate(lines) if 'SYSTEM DIMENSION' in l)
+    call_tree_start_line_idx = next(i for i, l in enumerate(lines)
+                                    if 'CALL TREE' in l)
+    call_tree_stop_line_idx = next(i for i, l in enumerate(lines)
+                                   if 'SYSTEM DIMENSION' in l)
     call_tree_lines = [
         l for l in lines[call_tree_start_line_idx + 1:call_tree_stop_line_idx]
         if len(l.strip()) != 0
@@ -110,7 +121,8 @@ def get_call_tree_lines(cube_dump_w_text):
 
 def calltree_from_lines(call_tree_lines):
     """
-    Get a call tree from the output of the command 
+    Get a call tree from the relevant part of the output of the
+    command 
 
     cube_dump -w <cubex_file>
 
@@ -164,12 +176,14 @@ def calltree_to_df2(calltree):
     # function name, cnode_id, parent_cnode_id
     fname_id_parentid = calltree_to_df(calltree)
 
-    df_repr = fullpath_vs_id.merge(
-        right=fname_id_parentid, how='inner', on='Cnode ID')
+    df_repr = fullpath_vs_id.merge(right=fname_id_parentid,
+                                   how='inner',
+                                   on='Cnode ID')
 
     return df_repr
 
-def get_call_tree_df(profile_file):
+
+def get_call_tree(profile_file):
     """
     Typical use case, gets all the information regarding the calltree
     """
@@ -178,5 +192,4 @@ def get_call_tree_df(profile_file):
     call_tree_lines = get_call_tree_lines(cube_dump_w_text)
     calltree = calltree_from_lines(call_tree_lines)
 
-
-    return calltree_to_df2(calltree)
+    return calltree

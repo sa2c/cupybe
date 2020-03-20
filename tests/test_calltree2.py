@@ -6,10 +6,13 @@ a pandas dataframe.
 
 if __name__ == '__main__':
     from sys import argv
-    from calltree import get_call_tree_df
+    from calltree import get_call_tree, calltree_to_df2
 
-    df = get_call_tree_df(argv[1])
+    call_tree = get_call_tree(argv[1])
+    call_tree_df = calltree_to_df2(call_tree)
 
+    print("Calltree:")
+    print(call_tree)
     print("Dataframe representation of calltree:")
-    print(df)
+    print(call_tree_df)
 
