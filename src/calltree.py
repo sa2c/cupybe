@@ -27,7 +27,7 @@ def calltree_to_df(call_tree):
               for n in iterate_on_call_tree(call_tree)]
 
     df = pd.DataFrame(
-        data=tuples, columns=['Function Name', 'Cnode ID', 'Parent CNode ID'])
+        data=tuples, columns=['Function Name', 'Cnode ID', 'Parent Cnode ID'])
     return df
 
 
@@ -91,7 +91,7 @@ def parse_line(line):
     splitpoint = re.search('\w', line).span()[0]
     level = line[:splitpoint].count(' ') / 2
     assert level == int(level), "Error in determining level"
-    return CallTreeLine(fun_name, cnode_id, level)
+    return CallTreeLine(fun_name, int(cnode_id), int(level))
 
 
 def get_call_tree_lines(cube_dump_w_text):
@@ -169,16 +169,14 @@ def calltree_to_df2(calltree):
 
     return df_repr
 
-def get_all_info(profile_file):
+def get_call_tree_df(profile_file):
     """
     Typical use case, gets all the information regarding the calltree
-    in different formats.
     """
     # "call tree" object
     cube_dump_w_text = get_cube_dump_w_text(profile_file)
     call_tree_lines = get_call_tree_lines(cube_dump_w_text)
     calltree = calltree_from_lines(call_tree_lines)
 
-    df_repr = calltree_to_df2(calltree)
 
-    return {'calltree': calltree, 'df': df_repr}
+    return calltree_to_df2(calltree)

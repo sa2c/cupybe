@@ -6,10 +6,10 @@ a pandas dataframe.
 
 if __name__ == '__main__':
     from sys import argv
-    from calltree import get_all_info
+    from calltree import get_call_tree_df
 
-    all_repr = get_all_info(argv[1])
+    df = get_call_tree_df(argv[1])
 
     print("Dataframe representation of calltree:")
-    print(all_repr['df'])
+    print(df)
 
