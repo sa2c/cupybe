@@ -119,10 +119,10 @@ def process_multi(profile_files):
     return call_tree, df_common, df_noncommon
 
 
-def convert_to_inclusive(series, call_tree):
+def convert_series_to_inclusive(series, call_tree):
     '''
-    converts a series having Cnode IDs as index from 
-    exclusive to inclusive
+    Converts a series having Cnode IDs as index from exclusive to inclusive.
+    Takes as input a CallTreeNode object (hopefully the root).
     '''
     # LRU cache does not work because of 
     # TypeError: unhashable type: 'list'
@@ -136,19 +136,28 @@ def convert_to_inclusive(series, call_tree):
 
     import pandas as pd
     return (pd.DataFrame(
-        data = [ (node.cnode_id,aggregate(node)) 
-            for node in ct.iterate_on_call_tree(call_tree) ],
-        columns = ['Cnode ID','metric'])
-        .set_index('Cnode ID').metric)
+            data = [ (node.cnode_id,aggregate(node)) 
+                for node in ct.iterate_on_call_tree(call_tree) ],
+            columns = ['Cnode ID','metric'])
+        .set_index('Cnode ID')
+        .metric)
 
+def convert_df_to_inclusive(df_by_cnode_id, call_tree):
+    '''
+    Converts a DataFrame having Cnode IDs as index from exclusive to inclusive.
+    '''
+    def aggregate(root):
+        value = df_by_cnode_id.loc[root.cnode_id,:]
+        for child in root.children:
+             value += aggregate(child)
+        return value
 
-
-        
-
-
-
-
-
+    import pandas as pd
+    return (pd.concat(objs = [ aggregate(n) for n in ct.iterate_on_call_tree(call_tree) ],
+                keys = [ n.cnode_id for n in ct.iterate_on_call_tree(call_tree)])
+                .rename_axis(mapper = ['Cnode ID', 'metric', 'Thread ID'],axis = 'index')
+                .unstack(['metric','Thread ID'])
+                )
 
 
 
