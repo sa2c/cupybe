@@ -1,5 +1,5 @@
 """
-Get a call tree from a .cubex file.
+Utilities to get a call tree (from the output of `cube_dump -w`).
 A call tree is represented as a tree of 
 (function_name,cnode_id,[list_of_children])
 named tuples.
@@ -7,10 +7,12 @@ named tuples.
 import logging
 from collections import namedtuple
 
+# Only members that are currently used.
 CallTreeNode = namedtuple('CallTreeNode',
                           ['fname', 'cnode_id', 'parent', 'children'])
 CallTreeNode.__repr__ = lambda x: calltree_to_repr(x)
 
+# Only members that are currently used.
 CallTreeLine = namedtuple('CallTreeLine', ['fname', 'cnode_id', 'level'])
 
 
@@ -104,19 +106,11 @@ def parse_line(line):
 def get_call_tree_lines(cube_dump_w_text):
     '''
     Select the lines relative to the call tree out of the
-    output of 'cube_dump -w.
+    output of 'cube_dump -w'.
     '''
-    lines = cube_dump_w_text.split('\n')
-    call_tree_start_line_idx = next(i for i, l in enumerate(lines)
-                                    if 'CALL TREE' in l)
-    call_tree_stop_line_idx = next(i for i, l in enumerate(lines)
-                                   if 'SYSTEM DIMENSION' in l)
-    call_tree_lines = [
-        l for l in lines[call_tree_start_line_idx + 1:call_tree_stop_line_idx]
-        if len(l.strip()) != 0
-    ]
-    logging.debug(f"No of lines: {len(call_tree_lines)}\n")
-    return call_tree_lines
+    from cube_file_utils import get_lines
+    return get_lines(cube_dump_w_text,start_hint = 'CALL TREE',
+            end_hint = 'SYSTEM DIMENSION')
 
 
 def calltree_from_lines(call_tree_lines):
@@ -152,13 +146,6 @@ def calltree_from_lines(call_tree_lines):
     return res
 
 
-def get_cube_dump_w_text(profile_file):
-    import subprocess
-    cube_dump_process = subprocess.run(['cube_dump', '-w', profile_file],
-                                       capture_output=True,
-                                       text=True)
-    return cube_dump_process.stdout
-
 
 def calltree_to_df2(calltree):
     """
@@ -188,6 +175,7 @@ def get_call_tree(profile_file):
     Typical use case, gets all the information regarding the calltree
     """
     # "call tree" object
+    from cube_file_utils import get_cube_dump_w_text
     cube_dump_w_text = get_cube_dump_w_text(profile_file)
     call_tree_lines = get_call_tree_lines(cube_dump_w_text)
     calltree = calltree_from_lines(call_tree_lines)

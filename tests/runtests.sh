@@ -2,7 +2,7 @@
 export PYTHONPATH=$PYTHONPATH:../src
 
 function run_test(){
-    ($@ &> $1.output || echo "$1 failed.") && echo "$1 ok."
+    ($@ &> $1.output || (echo "$1 failed." ; exit 1)) && echo "$1 ok."
 }
 
 run_test ./test_calltree1.py profile.cubex && \

@@ -3,6 +3,7 @@ Utilities to merge the information that comes from multiple '.cubex' files
 """
 import calltree as ct
 import datadump as dd
+import metrics as mt
 import logging
 
 
@@ -15,8 +16,12 @@ def process_cubex(profile_file):
     dump_df = dd.get_dump(profile_file)
 
     df = pd.merge(dump_df, call_tree_df, how='inner', on='Cnode ID')
+    conv_info = mt.get_inclusive_convertible_metrics(profile_file)
 
-    return {'calltree': call_tree, 'calltree_df': call_tree_df, 'df': df}
+    return {'calltree': call_tree, 
+            'calltree_df': call_tree_df, 
+            'df': df,
+            'conv_info': conv_info}
 
 
 def check_column_sets(column_sets):
@@ -123,6 +128,9 @@ def convert_series_to_inclusive(series, call_tree):
     '''
     Converts a series having Cnode IDs as index from exclusive to inclusive.
     Takes as input a CallTreeNode object (hopefully the root).
+
+    Notice: The results will be nonsensical unless the metric acted upon is
+            "INCLUSIVE convertible"
     '''
     # LRU cache does not work because of 
     # TypeError: unhashable type: 'list'
@@ -142,12 +150,28 @@ def convert_series_to_inclusive(series, call_tree):
         .set_index('Cnode ID')
         .metric)
 
-def convert_df_to_inclusive(df_by_cnode_id, call_tree):
+
+def select_inclusive_convertible_metrics(df, convertible_metrics):
+    # finding the level in the columns with the metrics
+    metric_level = df.columns.names.index('metric')
+    nlevels = len(df.columns.names)
+
+    # choosing the metrics
+    possible_metrics = convertible_metrics.intersection(
+            set(df.columns.levels[metric_level]))
+
+    metric_indexer = [slice(None)]*nlevels
+    metric_indexer[metric_level] = list(possible_metrics)
+
+    return df.loc[:,tuple(metric_indexer)]
+ 
+
+def convert_df_to_inclusive(df_convertible, call_tree):
     '''
     Converts a DataFrame having Cnode IDs as index from exclusive to inclusive.
     '''
     def aggregate(root):
-        value = df_by_cnode_id.loc[root.cnode_id,:]
+        value = df_convertible.loc[root.cnode_id,:]
         for child in root.children:
              value += aggregate(child)
         return value
@@ -158,6 +182,3 @@ def convert_df_to_inclusive(df_by_cnode_id, call_tree):
                 .rename_axis(mapper = ['Cnode ID', 'metric', 'Thread ID'],axis = 'index')
                 .unstack(['metric','Thread ID'])
                 )
-
-
-
