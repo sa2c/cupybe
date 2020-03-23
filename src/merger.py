@@ -75,12 +75,14 @@ def process_multi(profile_files):
 
     Returns
     -------
-    call_tree: CallTreeNode
-        A call tree recursive 
-    df_common: DataFrame
+    tree: CallTreeNode
+        A call tree recursive structure
+    tree_df : DataFrame
+        DataFrame representation of the call tree
+    common: DataFrame
         A data frame containing all the data relative to metrics that are 
         shared among *all* the `.cubex` files.
-    df_noncommon: DataFrame
+    noncommon: DataFrame
         A data frame containing all the data relatige that are specific to 
         single `.cubex` files.
 
@@ -165,7 +167,10 @@ def process_multi(profile_files):
     df_common = replace_fcpath_with_cnodeID(df_common)
     df_noncommon = replace_fcpath_with_cnodeID(df_noncommon)
 
-    return call_tree, df_common, df_noncommon
+    return {'tree'      : call_tree,
+            'tree_df'   : call_tree_df,
+            'common'    : df_common, 
+            'noncommon' : df_noncommon}
 
 
 def convert_series_to_inclusive(series, call_tree):
