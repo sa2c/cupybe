@@ -1,6 +1,5 @@
 """
 Utilities to get metric informations out of the output of `cube_dump -w`.
-
 """
 from collections import namedtuple
 
@@ -22,10 +21,16 @@ def get_metric_lines(cube_dump_w_text):
 def parse_line(line):
     '''
     Read a single line out of the `cube_dump -w` output.
-    INPUT:
-    "PAPI_L1_ICM  ( id=11, PAPI_L1_ICM, #, UINT64, , Level 1 instruction cache misses. [ L2_RQSTS:ALL_CODE_RD ], INCLUSIVE convertible, cacheable)"
-    OUTPUT:
-    (PAPI_L1_ICM,"INCLUSIVE convertible")
+
+    Parameters
+    ==========
+    line : str
+        String in the format ``PAPI_L1_ICM  ( id=11, PAPI_L1_ICM, #, UINT64, , Level 1 instruction cache misses. [ L2_RQSTS:ALL_CODE_RD ], INCLUSIVE convertible, cacheable)``
+
+    Returns
+    =======
+    info : Metric
+        Tuple in the form ``(PAPI_L1_ICM,"INCLUSIVE convertible")``
     '''
     # this is brittle but should work for now.
     # TODO : Strengthen it.
@@ -36,9 +41,17 @@ def parse_line(line):
 
 
 def get_metric_info(lines):
+    '''
+    Returns a list of tuples ``(metric_short_name, convertibility_info)``
+    '''
+
     return [parse_line(line) for line in lines]
 
 def get_inclusive_convertible_metrics(profile_file):
+    ''' This function gets directly as list of metrics that are 
+    ``INCLUSIVE convertible``.
+
+    '''
     from cube_file_utils import get_cube_dump_w_text
     cube_dump_w_text = get_cube_dump_w_text(profile_file)
     lines = get_metric_lines(cube_dump_w_text)

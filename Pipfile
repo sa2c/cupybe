@@ -10,6 +10,9 @@ ipython = "*"
 pipenv = "*"
 pandas = ">1.0"
 yapf = "*"
+sphinx = "*"
+numpydoc = "*"
+sphinx-rtd-theme = "*"
 
 [requires]
 python_version = "3.8"

@@ -1,7 +1,7 @@
 # PyCUBE
 
-This is a repository of scripts that can be used to extract and organise
-data coming from '.cubex' files.
+This is a repository of python modules and function that can be used to 
+extract and organise data contained in '.cubex' files.
 
 ## Notes
 In order for the tests to work, the environment variable `PYTHONPATH` needs 

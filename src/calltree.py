@@ -1,8 +1,9 @@
 """
-Utilities to get a call tree (from the output of `cube_dump -w`).
+Utilities to get a call tree (from the output of ``cube_dump -w``).
+
 A call tree is represented as a tree of 
-(function_name,cnode_id,[list_of_children])
-named tuples.
+``(function_name,cnode_id,parent,[list of children])``
+named tuples (of class ``CallTreeNode``)
 """
 import logging
 from collections import namedtuple
@@ -10,6 +11,25 @@ from collections import namedtuple
 # Only members that are currently used.
 CallTreeNode = namedtuple('CallTreeNode',
                           ['fname', 'cnode_id', 'parent', 'children'])
+'''A node of the call tree.
+
+.. py:attribute:: fname
+  
+   The name of the function;
+
+.. py:attribute:: cnode_id
+   
+   The unique ID related to the node in the call tree;
+
+.. py:attribute:: parent
+   
+   A binding to the parent node (can be ``None``);
+
+.. py:attribute:: children
+   
+   A list of bindings to child nodes.
+
+'''
 CallTreeNode.__repr__ = lambda x: calltree_to_repr(x)
 
 # Only members that are currently used.
@@ -24,7 +44,22 @@ def iterate_on_call_tree(root):
 
 
 def calltree_to_df(call_tree, full_path = False):
-    '''Convert a call tree into a DataFrame.'''
+    '''Convert a call tree into a DataFrame.
+
+    Parameters
+    ----------
+    call_tree : CallTreeNode
+        Recursive representation of a call tree
+    full_path : bool
+        Whether or not the full path needs to be in the output as a column
+
+    Returns
+    -------
+    df : DataFrame
+        A dataframe with "Function Name", "Cnode ID", "Parent Cnode ID" and 
+        optionally "Full Callpath" as columns.
+
+    '''
     import pandas as pd
     tuples = [(n.fname, n.cnode_id,
                n.parent.cnode_id if n.parent is not None else pd.NA)
@@ -46,8 +81,8 @@ def calltree_to_df(call_tree, full_path = False):
 
 
 def calltree_to_string(root, line_prefix='', max_len=60):
-    ''' 
-    For an understandable representation of the call tree.
+    ''' For an understandable, ascii art representation of the call tree.
+    Recursive function.
     '''
     res = line_prefix + f"-{root.fname}:"
     res += ' ' * (max_len - len(res))
@@ -61,8 +96,9 @@ def calltree_to_string(root, line_prefix='', max_len=60):
 
 
 def calltree_to_repr(root):
-    '''
-    An implementation for '__repr__'
+    ''' An implementation for '__repr__'. 
+
+    Prints only the beginning and the end of the call tree.
     '''
     lines = calltree_to_string(root).split('\n')
     res = lines[:5] + ['...'] + lines[-6:]
@@ -156,33 +192,19 @@ def calltree_from_lines(call_tree_lines):
     return res
 
 
-
-def calltree_to_df2(calltree):
-    """
-    Returns a df with 4 columns:
-    - full callpath
-    - function name
-    - cnode id
-    - parent cnode id
-    """
-    # full callpath vs cnode id for convenience
-    import pandas as pd
-    data = get_fpath_vs_id(calltree)
-    fullpath_vs_id = pd.DataFrame(data, columns=['Cnode ID', 'Full Callpath'])
-
-    # function name, cnode_id, parent_cnode_id
-    fname_id_parentid = calltree_to_df(calltree)
-
-    df_repr = fullpath_vs_id.merge(right=fname_id_parentid,
-                                   how='inner',
-                                   on='Cnode ID')
-
-    return df_repr
-
-
 def get_call_tree(profile_file):
     """
     Typical use case, gets all the information regarding the calltree
+
+    Parameters
+    ==========
+    profile_file : str
+        Name of the ``.cubex`` file
+
+    Returns
+    =======
+    calltree : CallTreeNode
+        A recursive representation of the call tree.
     """
     # "call tree" object
     from cube_file_utils import get_cube_dump_w_text

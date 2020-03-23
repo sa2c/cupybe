@@ -9,20 +9,20 @@ import logging
 
 def process_cubex(profile_file):
     '''
-    Process a single `.cubex` file.
+    Processes a single ``.cubex`` file.
 
     Parameters
     ----------
     profile_file : str
-        The name of the `.cubex` file.
+        The name of the ``.cubex`` file.
 
     Returns
     -------
-    calltree : CallTreeNode
+    calltree : calltree.CallTreeNode
         A call tree recursive object
-    calltree_df : DataFrame
+    calltree_df : pandas.DataFrame
         A DataFrame representation of the call tree object
-    df : DataFram
+    df : pandas.DataFrame
         A dataframe containing the profiling data
     conf_info : list
         convertibility information (to inclusive) for the metrics contained
@@ -62,7 +62,8 @@ def check_column_sets(column_sets):
 
 
 def process_multi(profile_files):
-    ''' Processes `.cubex` files coming from different profiling runs. 
+    ''' Processes ``.cubex`` files coming from different profiling runs, e.g.
+    from a ``scalasca -analyze`` run.
    
     Assumes that there is a set of metrics which are common to all files,
     and that no pair of files share metrics that are not shared by all the 
@@ -71,20 +72,20 @@ def process_multi(profile_files):
     Parameters
     ----------
     profile_file : list
-        List of `.cubex` filenames.
+        List of ``.cubex`` filenames.
 
     Returns
     -------
-    tree: CallTreeNode
-        A call tree recursive structure
-    tree_df : DataFrame
-        DataFrame representation of the call tree
-    common: DataFrame
+    tree : calltree.CallTreeNode
+        A call tree recursive structure.
+    tree_df : pandas.DataFrame
+        DataFrame representation of the call tree.
+    common : pandas.DataFrame
         A data frame containing all the data relative to metrics that are 
-        shared among *all* the `.cubex` files.
-    noncommon: DataFrame
+        shared among *all* the ``.cubex`` files.
+    noncommon : pandas.DataFrame
         A data frame containing all the data relatige that are specific to 
-        single `.cubex` files.
+        single ``.cubex`` files.
 
     '''
     import pandas as pd
@@ -215,7 +216,14 @@ def convert_series_to_inclusive(series, call_tree):
 
 
 def select_metrics(df, selected_metrics):
-    ''' Selects `selected_metrics` out of a DataFrame
+    ''' Selects `selected_metrics` out of a DataFrame.
+
+    This function solves some problems:
+
+    - Finding the ``metric`` level in ``df.columns``
+    - Selecting, out of ``selected_metrics`` only the ones that are also in the
+      Data Frame.
+
 
     Parameters
     ----------
