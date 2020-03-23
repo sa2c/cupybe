@@ -8,6 +8,27 @@ import logging
 
 
 def process_cubex(profile_file):
+    '''
+    Process a single `.cubex` file.
+
+    Parameters
+    ----------
+    profile_file : str
+        The name of the `.cubex` file.
+
+    Returns
+    -------
+    calltree : CallTreeNode
+        A call tree recursive object
+    calltree_df : DataFrame
+        A DataFrame representation of the call tree object
+    df : DataFram
+        A dataframe containing the profiling data
+    conf_info : list
+        convertibility information (to inclusive) for the metrics contained
+        in the dump.
+
+    '''
     import pandas as pd
     # Getting all callgraph information
     logging.debug(f"Reading {profile_file}...")
@@ -41,6 +62,29 @@ def check_column_sets(column_sets):
 
 
 def process_multi(profile_files):
+    ''' Processes `.cubex` files coming from different profiling runs. 
+   
+    Assumes that there is a set of metrics which are common to all files,
+    and that no pair of files share metrics that are not shared by all the 
+    others.
+
+    Parameters
+    ----------
+    profile_file : list
+        List of `.cubex` filenames.
+
+    Returns
+    -------
+    call_tree: CallTreeNode
+        A call tree recursive 
+    df_common: DataFrame
+        A data frame containing all the data relative to metrics that are 
+        shared among *all* the `.cubex` files.
+    df_noncommon: DataFrame
+        A data frame containing all the data relatige that are specific to 
+        single `.cubex` files.
+
+    '''
     import pandas as pd
     # Assuming that the calltree info is equal for all
     # .cubex files, up to isomorphism.
@@ -131,6 +175,20 @@ def convert_series_to_inclusive(series, call_tree):
 
     Notice: The results may be nonsensical unless the metric acted upon is
             "INCLUSIVE convertible"
+
+    Parameters
+    ----------
+    series : Series
+        A series representing exclusive measurements
+    call_tree : CallTreeNode
+        A recursive representation of the call tree.
+
+    Returns
+    -------
+    res : Series
+        A series having the same structure as the input, but with data summed
+        over following the hierarchy given by the call_tree object.
+
     '''
     # LRU cache does not work because of 
     # TypeError: unhashable type: 'list'
@@ -151,13 +209,29 @@ def convert_series_to_inclusive(series, call_tree):
         .metric)
 
 
-def select_inclusive_convertible_metrics(df, convertible_metrics):
+def select_metrics(df, selected_metrics):
+    ''' Selects `selected_metrics` out of a DataFrame
+
+    Parameters
+    ----------
+    df: DataFrame
+        A dataframe containing the metrics to be selected as columns. 
+        The dataframe columns are a `MultiIndex`
+    selected_metrics: iterable
+        Contains the names of the metrics that need need to be selected
+
+    Returns
+    -------
+    res : DataFrame
+        a DataFrame contaning only the selected metrics.
+        
+    '''
     # finding the level in the columns with the metrics
     metric_level = df.columns.names.index('metric')
     nlevels = len(df.columns.names)
 
     # choosing the metrics
-    possible_metrics = convertible_metrics.intersection(
+    possible_metrics = set(selected_metrics).intersection(
             set(df.columns.levels[metric_level]))
 
     metric_indexer = [slice(None)]*nlevels
@@ -169,6 +243,20 @@ def select_inclusive_convertible_metrics(df, convertible_metrics):
 def convert_df_to_inclusive(df_convertible, call_tree):
     '''
     Converts a DataFrame having Cnode IDs as index from exclusive to inclusive.
+
+    Parameters
+    ----------
+    df_convertible : DataFrame
+        A DataFrame containing only metrics that can be converted safely from
+        exclusive to inclusive.
+    call_tree: CallTreeNode
+        A recursive representation of the call tree.
+
+    Returns
+    -------
+    res : DataFrame
+        A DataFrame
+
     '''
     def aggregate(root):
         value = df_convertible.loc[root.cnode_id,:]

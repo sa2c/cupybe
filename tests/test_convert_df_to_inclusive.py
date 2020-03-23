@@ -31,11 +31,10 @@ calltree = ct.get_call_tree('profile.cubex')
 
 # dataframe conversion
 
-dump_excl = mg.select_inclusive_convertible_metrics( dump_excl, convertible_metrics)
-dump_incl_comp = mg.convert_df_to_inclusive(dump_excl,
-                                            calltree).sort_index()
-dump_incl = mg.select_inclusive_convertible_metrics(dump_incl,
-                                                    convertible_metrics)
+dump_excl = mg.select_metrics( dump_excl, convertible_metrics)
+dump_incl_comp = mg.convert_df_to_inclusive(dump_excl, calltree).sort_index()
+
+dump_incl = mg.select_metrics(dump_incl, convertible_metrics)
 
 assert (dump_excl.values != dump_incl.values).any()
 print("Inclusive and exclusive results partially differ as expected.")
