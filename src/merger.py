@@ -129,7 +129,7 @@ def convert_series_to_inclusive(series, call_tree):
     Converts a series having Cnode IDs as index from exclusive to inclusive.
     Takes as input a CallTreeNode object (hopefully the root).
 
-    Notice: The results will be nonsensical unless the metric acted upon is
+    Notice: The results may be nonsensical unless the metric acted upon is
             "INCLUSIVE convertible"
     '''
     # LRU cache does not work because of 
