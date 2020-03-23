@@ -23,7 +23,7 @@ def iterate_on_call_tree(root):
         yield from iterate_on_call_tree(child)
 
 
-def calltree_to_df(call_tree):
+def calltree_to_df(call_tree, full_path = False):
     '''Convert a call tree into a DataFrame.'''
     import pandas as pd
     tuples = [(n.fname, n.cnode_id,
@@ -32,6 +32,16 @@ def calltree_to_df(call_tree):
 
     df = pd.DataFrame(data=tuples,
                       columns=['Function Name', 'Cnode ID', 'Parent Cnode ID'])
+
+    if full_path:
+        # full callpath vs cnode id for convenience
+        data = get_fpath_vs_id(call_tree)
+        fullpath_vs_id = pd.DataFrame(data, columns=['Cnode ID', 'Full Callpath'])
+
+        # function name, cnode_id, parent_cnode_id
+
+        df = fullpath_vs_id.merge(right=df, how='inner', on='Cnode ID')
+
     return df
 
 
@@ -181,3 +191,4 @@ def get_call_tree(profile_file):
     calltree = calltree_from_lines(call_tree_lines)
 
     return calltree
+

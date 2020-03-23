@@ -19,10 +19,10 @@ print(res['df'])
 
 print("Processing multiple dump")
 
-call_tree,df_common,df_noncommon  = process_multi(files)
+output  = process_multi(files)
 print("Common metrics to all the profile files:")
-print(df_common)
+print(output['common'])
 print("Metrics specific to single profile files:")
-print(df_noncommon)
+print(output['noncommon'])
 
 

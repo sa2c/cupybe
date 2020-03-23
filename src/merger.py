@@ -33,7 +33,7 @@ def process_cubex(profile_file):
     # Getting all callgraph information
     logging.debug(f"Reading {profile_file}...")
     call_tree = ct.get_call_tree(profile_file)
-    call_tree_df = ct.calltree_to_df2(call_tree)
+    call_tree_df = ct.calltree_to_df(call_tree,full_path = True)
     dump_df = dd.get_dump(profile_file)
 
     df = pd.merge(dump_df, call_tree_df, how='inner', on='Cnode ID')
