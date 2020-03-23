@@ -1,5 +1,9 @@
 """
-Utilities to get metric informations out of the output of `cube_dump -w`.
+Utilities to get metric informations out of the output of ``cube_dump -w``.
+
+The only useful piece of information about the metrics is, for now, 
+the convertibility to inclusive.
+
 """
 from collections import namedtuple
 

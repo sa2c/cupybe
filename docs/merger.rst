@@ -13,12 +13,12 @@ Single/Multi ``.cubex`` files processing
 .. autofunction:: process_multi
 
 
-
 Conversion from exclusive to inclusive metrics
 ##############################################
 
 The ``select_metrics`` function may help in selecting only the metrics that can
-be transformed safely.
+be transformed safely. To have a list of metrics to select, see 
+:ref:`the metrics module <get-inclusive-convertible-metrics>`.
 
 .. autofunction:: select_metrics
 
