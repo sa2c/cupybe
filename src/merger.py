@@ -104,26 +104,27 @@ def process_multi(profile_files, exclusive = True):
 
     logging.debug(f"Reading {len(profile_files)} files...")
     outputs = [ process_cubex(pf, exclusive) for pf in profile_files]
-    dfs = [ output['df'] for output in outputs ] 
+    dfs = [ output['df'].set_index(['Cnode ID','Thread ID']) for output in outputs ] 
     conv_infos = [ output['conv_info'] for output in outputs ] 
 
     conv_info = set.union(*conv_infos)
 
-    dfs2 = dfs
-
     # finding columns common to all DFs and creating
     # a dataframe for those
-    columns_df = [set(df.columns) for df in dfs2]
+    columns_df = [set(df.columns) for df in dfs]
+
+    check_column_sets(columns_df)
+
     common_cols = set.intersection(*columns_df)
 
-    dfs2_common = [df.loc[:, common_cols] for df in dfs2]
+    dfs_common = [df.loc[:, common_cols] for df in dfs]
 
-    for i, df2 in enumerate(dfs2_common):
-        df2.columns = pd.MultiIndex.from_tuples([(i, col)
+    for i, df in enumerate(dfs_common):
+        df.columns = pd.MultiIndex.from_tuples([(i, col)
                                                  for col in common_cols],
                                                 names=['run', 'metric'])
 
-    df_common = pd.concat(dfs2_common, axis='columns', join='inner')
+    df_common = pd.concat(dfs_common, axis='columns', join='inner')
 
     # finding columns specific to each DFs and creating a
     # dataframe for those
@@ -132,18 +133,14 @@ def process_multi(profile_files, exclusive = True):
         columns.difference(common_cols) for columns in columns_df
     ]
 
-    dfs2_noncommon = [
+    dfs_noncommon = [
         df.loc[:, noncommon_columns]
-        for df, noncommon_columns in zip(dfs2, noncommon_columns_df)
+        for df, noncommon_columns in zip(dfs, noncommon_columns_df)
     ]
 
-    df_noncommon = pd.concat(dfs2_noncommon, axis='columns', join='inner')
-    # Using Cnode ID in the index instead of the full callpath
-    # (using the Cnode ID - full callpath relationship
-    #  from the first profile file)
-
-    tmp = call_tree_df.loc[:, ['Full Callpath', 'Cnode ID']].set_index(
-        'Full Callpath')
+    df_noncommon = (pd.concat(dfs_noncommon, axis='columns', join='inner')
+            .rename_axis(mapper = ['metric'], axis = 'columns'))
+    
 
     return {'tree'      : call_tree,
             'tree_df'   : call_tree_df,
@@ -229,7 +226,24 @@ def select_metrics(df, selected_metrics):
     metric_indexer[metric_level] = list(possible_metrics)
 
     return df.loc[:,tuple(metric_indexer)]
- 
+
+
+def transpose_for_conversion(df):
+    '''
+    In order to be converted, the index must contain only ``Cnode ID``.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        The DataFrame to be transposed
+
+    Returns
+    -------
+    transposed: pandas.DataFrame
+        The transposed DataFrame with ``Cnode ID`` as index.
+    '''
+    levels_to_unstack = [ name for name in df.index.names if name != 'Cnode ID']
+    return df.unstack(levels_to_unstack)
 
 def convert_df_to_inclusive(df_convertible, call_tree):
     '''

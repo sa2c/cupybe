@@ -18,15 +18,15 @@ input_file = argv[1]
 
 convertible_metrics = mt.get_inclusive_convertible_metrics(input_file)
 
-dump_excl = (cfu.get_dump(profile_file=input_file, exclusive=True).set_index([
-    'Cnode ID', 'Thread ID'
-]).unstack('Thread ID').rename_axis(mapper=['metric', 'Thread ID'],
-                                    axis='columns').sort_index())
+def get_df(exclusive):
+    return (cfu.get_dump(profile_file=input_file, exclusive=exclusive)
+        .set_index([ 'Cnode ID', 'Thread ID' ])
+        .rename_axis(mapper=['metric'], axis='columns')
+        .pipe(mg.transpose_for_conversion).sort_index())
 
-dump_incl = (cfu.get_dump(profile_file=input_file, exclusive=False).set_index([
-    'Cnode ID', 'Thread ID'
-]).unstack('Thread ID').rename_axis(mapper=['metric', 'Thread ID'],
-                                    axis='columns').sort_index())
+dump_excl = get_df(exclusive = True)
+
+dump_incl = get_df(exclusive = False)
 
 calltree = ct.get_call_tree('profile.cubex')
 

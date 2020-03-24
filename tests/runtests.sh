@@ -8,4 +8,5 @@ function run_test(){
 run_test ./test_calltree1.py profile.cubex && \
 run_test ./test_calltree2.py profile.cubex && \
 run_test ./test_process_multi.py scalasca_output && \
-run_test ./test_convert_df_to_inclusive.py profile.cubex
+run_test ./test_convert_df_to_inclusive.py profile.cubex && \
+run_test ./test_convert_df_to_inclusive_multi.py scalasca_output/*/profile.cubex
