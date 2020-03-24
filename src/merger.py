@@ -165,15 +165,16 @@ def cnode_id_to_path(df,tree_df, full_path = True):
         (``True``) or with the plain function name.
         
     '''
-
     cnames = list(df.columns.names)
     inames = list(df.index.names)
 
     assert None not in cnames, "workaround not implemented"
     assert None not in inames, "workaround not implemented"
 
-    new_index_col = 'Full Callpath' if full_path else 'Function Name'
+    new_index_col = 'Full Callpath' if full_path else 'Short Callpath'
     needed_tree_cols  = ['Cnode ID', new_index_col]
+
+    tree_df['Short Callpath'] = tree_df['Function Name'].str.cat(tree_df['Cnode ID'].astype(str),sep = ',')
 
     needed_tree_data  = tree_df[needed_tree_cols]
 
@@ -185,7 +186,7 @@ def cnode_id_to_path(df,tree_df, full_path = True):
         df.stack(cnames).reset_index(),
         needed_tree_data,
         on = 'Cnode ID')
-        .drop('Cnode ID', axis = 'columns')
+        .drop('Cnode ID', axis = 'columns')#, new_index_levels, cnames)
         .set_index(new_index_levels+cnames)[0]
-        .unstack(cnames)) # TODO: Run & Test
+        .unstack(cnames))
 
