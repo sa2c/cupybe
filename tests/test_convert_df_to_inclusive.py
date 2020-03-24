@@ -6,7 +6,7 @@ using the 'incl' flag.
 '''
 import calltree as ct
 import cube_file_utils as cfu
-import merger as mg
+import inclusive_conversion as ic
 import metrics as mt
 import test_utils as tu
 
@@ -22,7 +22,7 @@ def get_df(exclusive):
     return (cfu.get_dump(profile_file=input_file, exclusive=exclusive)
         .set_index([ 'Cnode ID', 'Thread ID' ])
         .rename_axis(mapper=['metric'], axis='columns')
-        .pipe(mg.transpose_for_conversion).sort_index())
+        .pipe(ic.transpose_for_conversion).sort_index())
 
 dump_excl = get_df(exclusive = True)
 
@@ -32,10 +32,10 @@ calltree = ct.get_call_tree('profile.cubex')
 
 # dataframe conversion
 
-dump_excl = mg.select_metrics( dump_excl, convertible_metrics)
-dump_incl_comp = mg.convert_df_to_inclusive(dump_excl, calltree).sort_index()
+dump_excl = ic.select_metrics( dump_excl, convertible_metrics)
+dump_incl_comp = ic.convert_df_to_inclusive(dump_excl, calltree).sort_index()
 
-dump_incl = mg.select_metrics(dump_incl, convertible_metrics)
+dump_incl = ic.select_metrics(dump_incl, convertible_metrics)
 
 assert (dump_excl.values != dump_incl.values).any()
 print("Inclusive and exclusive results partially differ as expected.")
@@ -55,7 +55,7 @@ for col in dump_excl:
     series_excl = dump_excl[col]
     series_incl = dump_incl[col]
 
-    series_incl_comp = mg.convert_series_to_inclusive(series_excl,
+    series_incl_comp = ic.convert_series_to_inclusive(series_excl,
                                                       calltree).sort_index()
 
     assert any(series_excl != series_incl)

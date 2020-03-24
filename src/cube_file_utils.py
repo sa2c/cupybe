@@ -58,8 +58,10 @@ def get_dump(profile_file, exclusive = True):
     ''' Parses output of ``cube_dump`` on a ``.cubex`` file and returns a 
     dataframe.
 
-    Thin wrapper around `pandas.read_csv`. Utility to obtain pandas dataframes 
-    with all the metrics out of '.cubex' files via "cube_dump".
+    Thin wrapper around ``pandas.read_csv``, to obtain pandas dataframes 
+    with all the metrics out of ``.cubex`` files via ``cube_dump``.
+    The layout of the dataframe is the same as the one coming out of 
+    ``cube_dump``.
 
     Parameters
     ==========
@@ -72,7 +74,7 @@ def get_dump(profile_file, exclusive = True):
     Returns
     =======
     res : pandas.DataFrame
-        A DataFrame containing all the metrics in the ``.cubex`` file
+        A DataFrame containing all the metrics in the ``.cubex`` file. 
     '''
     import subprocess
     import pandas as pd
