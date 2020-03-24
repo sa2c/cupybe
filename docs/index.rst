@@ -36,16 +36,12 @@ Notes
   sophisticated way using nodes and MPI ranks.  
   Only the "call tree" is implemented.  
   
-The system tree should be easy to implement extending the same machinery
-used for the call tree.
-
 * The inclusive/exclusive conversions are not fully implemented. For those 
   metrics that are "Inclusive convertible", the conversion from exclusive to
   inclusive along the call tree have been implemented. 
   Anyway it is possible to ask ``cube_dump`` for the inclusive metrics if one 
   likes.
   
-Expand the possibilities for metric conversions.
 
 
 
