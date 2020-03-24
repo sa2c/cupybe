@@ -166,16 +166,19 @@ def cnode_id_to_path(df,tree_df, full_path = True):
         
     '''
 
-    cnames = df.columns.names 
-    inames = df.index.names 
+    cnames = list(df.columns.names)
+    inames = list(df.index.names)
 
     assert None not in cnames, "workaround not implemented"
     assert None not in inames, "workaround not implemented"
 
-    needed_tree_cols  = ['Cnode ID', 'Full Callpath' if full_path else 'Function Name']
+    new_index_col = 'Full Callpath' if full_path else 'Function Name'
+    needed_tree_cols  = ['Cnode ID', new_index_col]
 
     needed_tree_data  = tree_df[needed_tree_cols]
 
+    new_index_levels = list(inames)
+    new_index_levels[inames.index('Cnode ID')] = new_index_col
 
     import pandas as pd 
     return ( pd.merge(
@@ -183,5 +186,6 @@ def cnode_id_to_path(df,tree_df, full_path = True):
         needed_tree_data,
         on = 'Cnode ID')
         .drop('Cnode ID', axis = 'columns')
-        .stack(cnames)) # TODO: Run & Test
+        .set_index(new_index_levels+cnames)[0]
+        .unstack(cnames)) # TODO: Run & Test
 
