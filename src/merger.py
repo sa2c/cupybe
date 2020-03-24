@@ -151,7 +151,8 @@ def process_multi(profile_files, exclusive = True):
 
 def cnode_id_to_path(df,tree_df, full_path = True):
     '''
-    Converts the ``Cnode ID`` in the index of a DataFrame to paths. 
+    Converts the ``Cnode ID`` in the index of a DataFrame to function name 
+    or call path.
 
     Parameters
     ----------
@@ -162,8 +163,9 @@ def cnode_id_to_path(df,tree_df, full_path = True):
         information for the translation.
     full_path : bool
         Whether or not to replace the ``Cnode ID`` with a full call path 
-        (``True``) or with the plain function name.
-        
+        (``True``) or with the function name to which the ``Cnode ID`` has been 
+        appended.
+
     '''
     cnames = list(df.columns.names)
     inames = list(df.index.names)

@@ -28,8 +28,29 @@ The two most important functions to use are possibly
 ``pandas.DataFrame`` object. In addition to that, the calltree is also stored 
 in a recursive fashion using :ref:`CallTreeNode <call-tree-node>` objects. 
 
+Notes
++++++
+
+* The "system tree" is not dealt with at the moment.  This means that data can 
+  be indexed only using ``Thread ID``\s instead of a somewhat more 
+  sophisticated way using nodes and MPI ranks.  
+  Only the "call tree" is implemented.  
+  
+The system tree should be easy to implement extending the same machinery
+used for the call tree.
+
+* The inclusive/exclusive conversions are not fully implemented. For those 
+  metrics that are "Inclusive convertible", the conversion from exclusive to
+  inclusive along the call tree have been implemented. 
+  Anyway it is possible to ask ``cube_dump`` for the inclusive metrics if one 
+  likes.
+  
+Expand the possibilities for metric conversions.
+
+
 
 Contents
+
 ++++++++++++++++++
 
 .. toctree::
