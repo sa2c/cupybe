@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.8
+#!/usr/bin/env python3
 '''
 This script runs the algorithm, prints the results, and checks 
 that the representation of the call tree matches the one that is 

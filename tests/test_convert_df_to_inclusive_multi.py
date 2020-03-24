@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.8
+#!/usr/bin/env python3
 '''j
 This test checks that the function to compute the inclusive data from the 
 exclusive data yields the same values as the ones obtained from `cube_dump`

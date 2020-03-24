@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.8
+#!/usr/bin/env python3
 '''
 Just a test to see that everything runs correctly.
 '''

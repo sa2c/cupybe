@@ -10,7 +10,7 @@ PyCube documentation
 in ``.cubex`` files produced by ``Score-P`` into data structures that can be 
 interacted with through Python libraries (e.g., Pandas).
 
-It is basically a bynch of functions that use ``cube_dump`` and parses its 
+It is basically a bunch of functions that use ``cube_dump`` and parse its 
 output (see the `Cube Command line tools guide in html 
 <https://apps.fz-juelich.de/scalasca/releases/cube/4.4/docs/tools-guide/html/>`_ 
 and its `PDF version 
@@ -25,7 +25,7 @@ The two most important functions to use are possibly
 :ref:`process_cubex <process-cubex>` and
 :ref:`process_multi <process-multi>`, which are used to parse a single (or many)
 ``.cubex`` files at once, yielding data that is mostly stored into 
-``pandas.DataFrame`` object. In addition to that, the calltree is also stored 
+``pandas.DataFrame``\s. In addition to that, the calltree is also stored 
 in a recursive fashion using :ref:`CallTreeNode <call-tree-node>` objects. 
 
 Notes
@@ -42,11 +42,8 @@ Notes
   Anyway it is possible to ask ``cube_dump`` for the inclusive metrics if one 
   likes.
   
-
-
-
 Contents
-++++++++++++++++++
+++++++++
 
 .. toctree::
    :maxdepth: 2
@@ -56,8 +53,6 @@ Contents
    cube_file_utils
    metrics
    inclusive_conversion
-
-
 
 Indices and tables
 ++++++++++++++++++
