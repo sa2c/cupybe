@@ -13,4 +13,4 @@ The documentation is hosted on [readthedocs.io](https://pycubelib.readthedocs.io
   It also require the program `cube_dump` to be installed and in the `$PATH`.
 * The project is not completed. While the main functionalities have been 
   implemented, the organisation of them into functions might not be optimal.
-
+* The library has been tested/needs cubelib 4.4.4.

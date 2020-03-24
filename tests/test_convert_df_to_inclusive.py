@@ -5,9 +5,10 @@ exclusive data yields the same values as the ones obtained from `cube_dump`
 using the 'incl' flag.
 '''
 import calltree as ct
-import datadump as dd
+import cube_file_utils as cfu
 import merger as mg
 import metrics as mt
+import test_utils as tu
 
 import pandas as pd
 import numpy as np
@@ -17,12 +18,12 @@ input_file = argv[1]
 
 convertible_metrics = mt.get_inclusive_convertible_metrics(input_file)
 
-dump_excl = (dd.get_dump(profile_file=input_file, exclusive=True).set_index([
+dump_excl = (cfu.get_dump(profile_file=input_file, exclusive=True).set_index([
     'Cnode ID', 'Thread ID'
 ]).unstack('Thread ID').rename_axis(mapper=['metric', 'Thread ID'],
                                     axis='columns').sort_index())
 
-dump_incl = (dd.get_dump(profile_file=input_file, exclusive=False).set_index([
+dump_incl = (cfu.get_dump(profile_file=input_file, exclusive=False).set_index([
     'Cnode ID', 'Thread ID'
 ]).unstack('Thread ID').rename_axis(mapper=['metric', 'Thread ID'],
                                     axis='columns').sort_index())
@@ -41,15 +42,8 @@ print("Inclusive and exclusive results partially differ as expected.")
 assert (dump_excl.values == dump_incl.values).any()
 print("Inclusive and exclusive results are partially equal as expected.")
 
-def check_float_equality(a,b):
-    comp = a.values 
-    ref = b.values
-    den = (np.abs(comp) + np.abs(ref))
-    check = np.abs(comp-ref)/ den
-    
-    assert np.all((check < 1e-5) | (a == b))
 
-check_float_equality(dump_incl_comp,dump_incl)
+tu.check_float_equality(dump_incl_comp,dump_incl)
 
 print(
     "Results from convert_df_to_inclusive coincide with the ones coming from cube_dump."
@@ -69,7 +63,7 @@ for col in dump_excl:
     assert any(series_excl == series_incl)
     print("Inclusive and exclusive results are partially equal as expected.")
 
-    check_float_equality(series_incl_comp,series_incl)
+    tu.check_float_equality(series_incl_comp,series_incl)
 
     print(
         "Results from conversion coincide with the ones coming from cube_dump."

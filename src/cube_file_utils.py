@@ -66,7 +66,8 @@ def get_dump(profile_file, exclusive = True):
     profile_file : str
         Name of the ``.cubex`` file.
     exclusive : bool
-        Whether to ask ``cube_dump`` for exclusive or inclusive metrics.
+        Whether to ask ``cube_dump`` for exclusive (True) or inclusive (False) 
+        metrics.
 
     Returns
     =======

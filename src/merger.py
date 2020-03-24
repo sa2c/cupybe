@@ -7,7 +7,7 @@ import metrics as mt
 import logging
 
 
-def process_cubex(profile_file):
+def process_cubex(profile_file, exclusive = True):
     '''
     Processes a single ``.cubex`` file.
 
@@ -15,6 +15,9 @@ def process_cubex(profile_file):
     ----------
     profile_file : str
         The name of the ``.cubex`` file.
+    exclusive : bool
+        Whether to ask ``cube_dump`` for exclusive (True) or inclusive (False) 
+        metrics.
 
     Returns
     -------
@@ -24,7 +27,7 @@ def process_cubex(profile_file):
         A DataFrame representation of the call tree object
     df : pandas.DataFrame
         A dataframe containing the profiling data
-    conf_info : list
+    conv_info : list
         convertibility information (to inclusive) for the metrics contained
         in the dump.
 
@@ -34,14 +37,13 @@ def process_cubex(profile_file):
     logging.debug(f"Reading {profile_file}...")
     call_tree = ct.get_call_tree(profile_file)
     call_tree_df = ct.calltree_to_df(call_tree,full_path = True)
-    dump_df = cfu.get_dump(profile_file)
+    dump_df = cfu.get_dump(profile_file, exclusive)
 
-    df = pd.merge(dump_df, call_tree_df, how='inner', on='Cnode ID')
     conv_info = mt.get_inclusive_convertible_metrics(profile_file)
 
     return {'calltree': call_tree, 
             'calltree_df': call_tree_df, 
-            'df': df,
+            'df': dump_df,
             'conv_info': conv_info}
 
 
@@ -61,7 +63,7 @@ def check_column_sets(column_sets):
     logging.debug("Column sets are ok.")
 
 
-def process_multi(profile_files):
+def process_multi(profile_files, exclusive = True):
     ''' Processes ``.cubex`` files coming from different profiling runs, e.g.
     from a ``scalasca -analyze`` run.
    
@@ -73,6 +75,9 @@ def process_multi(profile_files):
     ----------
     profile_file : list
         List of ``.cubex`` filenames.
+    exclusive : bool
+        Whether to ask ``cube_dump`` for exclusive (True) or inclusive (False) 
+        metrics.
 
     Returns
     -------
@@ -86,32 +91,25 @@ def process_multi(profile_files):
     noncommon : pandas.DataFrame
         A data frame containing all the data relatige that are specific to 
         single ``.cubex`` files.
+    conv_info : list
+        A list of metrics that can be converted to inclusive.
 
     '''
     import pandas as pd
     # Assuming that the calltree info is equal for all
     # .cubex files, up to isomorphism.
-    first_file_info = process_cubex(profile_files[0])
+    first_file_info = process_cubex(profile_files[0], exclusive)
     call_tree = first_file_info['calltree']
     call_tree_df = first_file_info['calltree_df']
 
     logging.debug(f"Reading {len(profile_files)} files...")
-    dfs = [process_cubex(pf)['df'] for pf in profile_files]
+    outputs = [ process_cubex(pf, exclusive) for pf in profile_files]
+    dfs = [ output['df'] for output in outputs ] 
+    conv_infos = [ output['conv_info'] for output in outputs ] 
 
-    def adjust_df(df):
-        # Function names, Cnode ID and Parent Cnode ID
-        # can always be retrieved from the full callpath.
-        # Cnode IDs could also change between '.cubex' files,
-        # in principle.
-        cols_to_drop = ['Cnode ID', 'Function Name', 'Parent Cnode ID']
-        # TODO: Move from using 'Thread ID' to the proper
-        #       full system path.
-        new_index_columns = ['Full Callpath', 'Thread ID']
-        return (df.drop(cols_to_drop,
-                        axis='columns').set_index(new_index_columns))
+    conv_info = set.union(*conv_infos)
 
-    logging.debug(f"Adjusting dataframes...")
-    dfs2 = [adjust_df(df) for df in dfs]
+    dfs2 = dfs
 
     # finding columns common to all DFs and creating
     # a dataframe for those
@@ -147,31 +145,11 @@ def process_multi(profile_files):
     tmp = call_tree_df.loc[:, ['Full Callpath', 'Cnode ID']].set_index(
         'Full Callpath')
 
-    def replace_fcpath_with_cnodeID(df):
-        colnames = df.columns.names + ['Thread ID']
-        return (df
-                .unstack('Thread ID')
-                .pipe( lambda x: pd.DataFrame(
-                        data=x.values, 
-                        index=x.index, 
-                        columns=pd.Index(x.columns)))
-                .join(tmp, how='inner')
-                .set_index('Cnode ID') # nukes the current idx
-                .pipe( lambda x: pd.DataFrame(
-                        data=x.values,
-                        index=x.index,
-                        columns=pd.MultiIndex.from_tuples(
-                            x.columns, 
-                            names=colnames)
-                        )))
-
-    df_common = replace_fcpath_with_cnodeID(df_common)
-    df_noncommon = replace_fcpath_with_cnodeID(df_noncommon)
-
     return {'tree'      : call_tree,
             'tree_df'   : call_tree_df,
             'common'    : df_common, 
-            'noncommon' : df_noncommon}
+            'noncommon' : df_noncommon,
+            'conv_info' : conv_info}
 
 
 def convert_series_to_inclusive(series, call_tree):
@@ -277,9 +255,11 @@ def convert_df_to_inclusive(df_convertible, call_tree):
              value += aggregate(child)
         return value
 
+    names = df_convertible.columns.names
+
     import pandas as pd
     return (pd.concat(objs = [ aggregate(n) for n in ct.iterate_on_call_tree(call_tree) ],
                 keys = [ n.cnode_id for n in ct.iterate_on_call_tree(call_tree)])
-                .rename_axis(mapper = ['Cnode ID', 'metric', 'Thread ID'],axis = 'index')
-                .unstack(['metric','Thread ID'])
+                .rename_axis(mapper = ['Cnode ID'] + names,axis = 'index')
+                .unstack(names)
                 )
