@@ -46,7 +46,6 @@ Notes
 
 
 Contents
-
 ++++++++++++++++++
 
 .. toctree::
