@@ -101,18 +101,22 @@ def select_metrics(df, selected_metrics):
 
 
 
-def convert_df_to_inclusive(df_convertible, call_tree):
+def convert_df_to_inclusive(df_convertible, call_tree, tree_df = None):
     '''
     Converts a DataFrame from exclusive to inclusive. A level named 
-    ``Cnode ID`` must be in the index.
+    ``Cnode ID``, ``Full Callpath`` or ``Short Callpath`` must be in the index.
 
     Parameters
     ----------
-    df_convertible : DataFrame
+    df_convertible : pandas.DataFrame
         A DataFrame containing only metrics that can be converted safely from
         exclusive to inclusive.
     call_tree: CallTreeNode
         A recursive representation of the call tree.
+    tree_df : pandas.DataFrame or None
+        In case ``df_convertible`` is not indexed by ``Cnode ID``, a dataframe
+        that can be used to retrieve the ``Cnode ID`` from the index of 
+        ``df_convertible``.
 
     Returns
     -------
@@ -120,8 +124,13 @@ def convert_df_to_inclusive(df_convertible, call_tree):
         A DataFrame
 
     '''
-    # In order to be converted, the index must contain only ``Cnode ID``.
-    assert 'Cnode ID' in df_convertible.index.names, "Cnode ID not in index!"
+    import index_conversions as ic
+
+    old_index_name = ic.find_index_col(df_convertible)
+
+    # dfcr = df_convertible_reindexed
+    dfcr = ic.convert_index(df_convertible,tree_df,target = 'Cnode ID')
+
     levels_to_unstack = [
         name for name in df_convertible.index.names if name != 'Cnode ID'
     ]
@@ -146,5 +155,6 @@ def convert_df_to_inclusive(df_convertible, call_tree):
                 )
                 .rename_axis(mapper = ['Cnode ID'] + names,axis = 'index')
                 .unstack(names)
+                .pipe(ic.convert_index,tree_df,old_index_name)
                 .stack(levels_to_unstack)
                 )

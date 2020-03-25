@@ -6,6 +6,22 @@ e.g. ``Cnode IDs``, ``Full Callpath`` and ``Short Callpath``.
 separated by comma.
 '''
 
+possible_index_cols = ["Short Callpath", "Full Callpath", "Cnode ID"]
+
+def find_index_col(df):
+    '''
+    Finds the column in the index that can be transformed.
+    '''
+    from itertools import filterfalse
+    index_candidates = list(filterfalse( lambda x : x not in possible_index_cols, df.index.names))
+    
+    assert len(index_candidates) == 1, "Not clear which index to use."
+    return index_candidates[0]
+
+def get_short_callpath(tree_df):
+    # short callpath = "FunctionName,CnodeId"
+    return tree_df['Function Name'].str.cat(tree_df['Cnode ID'].astype(str),sep = ',')
+
 def convert_index(df,tree_df, target = None):
     '''
     Converts the the index of a DataFrame to ``Short Callpath``, 
@@ -32,20 +48,22 @@ def convert_index(df,tree_df, target = None):
 
     assert None not in cnames, "workaround not implemented"
     assert None not in inames, "workaround not implemented"
+    import pandas as pd 
+    assert type(df) != pd.Series
 
     new_index_col = target 
     possible_index_cols = ["Short Callpath", "Full Callpath", "Cnode ID"]
 
-    from itertools import filterfalse
-    index_candidates = list(filterfalse( lambda x : x not in possible_index_cols, inames))
-    
-    assert len(index_candidates) == 1, "Not clear which index to use."
+    old_index_col = find_index_col(df)
+    if old_index_col == new_index_col:
+        return df
+    else :
+        assert tree_df is not None , "tree_df needed when index does not contain Cnode ID"
 
-    old_index_col = index_candidates[0]
     needed_tree_cols  = [old_index_col, new_index_col]
 
     if 'Short Callpath' in needed_tree_cols:  
-        tree_df['Short Callpath'] = tree_df['Function Name'].str.cat(tree_df['Cnode ID'].astype(str),sep = ',')
+        tree_df['Short Callpath'] = get_short_callpath(tree_df)
 
     needed_tree_data  = tree_df[needed_tree_cols]
 
