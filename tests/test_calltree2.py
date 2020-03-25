@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.8
+#!/usr/bin/env python3
 '''
 This script runs only a convenient function that returns all the info in 
 a pandas dataframe.

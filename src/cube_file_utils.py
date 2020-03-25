@@ -18,9 +18,18 @@ def get_cube_dump_w_text(profile_file):
         Output of ``cube_dump -w``
     '''
     import subprocess
-    cube_dump_process = subprocess.run(['cube_dump', '-w', profile_file],
+    import sys
+    if sys.version_info >= (3,7,0):
+        cube_dump_process = subprocess.run(['cube_dump', '-w', profile_file],
                                        capture_output=True,
                                        text=True)
+
+
+    if sys.version_info < (3,7,0):
+        cube_dump_process = subprocess.run(['cube_dump', '-w', profile_file],
+                                       stdout = subprocess.PIPE,
+                                       universal_newlines=True)
+ 
     return cube_dump_process.stdout
 
 def get_lines(cube_dump_w_text, start_hint, end_hint):
@@ -58,20 +67,23 @@ def get_dump(profile_file, exclusive = True):
     ''' Parses output of ``cube_dump`` on a ``.cubex`` file and returns a 
     dataframe.
 
-    Thin wrapper around `pandas.read_csv`. Utility to obtain pandas dataframes 
-    with all the metrics out of '.cubex' files via "cube_dump".
+    Thin wrapper around ``pandas.read_csv``, to obtain pandas dataframes 
+    with all the metrics out of ``.cubex`` files via ``cube_dump``.
+    The layout of the dataframe is the same as the one coming out of 
+    ``cube_dump``.
 
     Parameters
     ==========
     profile_file : str
         Name of the ``.cubex`` file.
     exclusive : bool
-        Whether to ask ``cube_dump`` for exclusive or inclusive metrics.
+        Whether to ask ``cube_dump`` for exclusive (True) or inclusive (False) 
+        metrics.
 
     Returns
     =======
     res : pandas.DataFrame
-        A DataFrame containing all the metrics in the ``.cubex`` file
+        A DataFrame containing all the metrics in the ``.cubex`` file. 
     '''
     import subprocess
     import pandas as pd

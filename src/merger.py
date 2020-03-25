@@ -7,14 +7,17 @@ import metrics as mt
 import logging
 
 
-def process_cubex(profile_file):
+def process_cubex(profile_file, exclusive = True):
     '''
-    Processes a single ``.cubex`` file.
+    Processes a single ``.cubex`` file, returning a number of 
 
     Parameters
     ----------
     profile_file : str
         The name of the ``.cubex`` file.
+    exclusive : bool
+        Whether to ask ``cube_dump`` for exclusive (True) or inclusive (False) 
+        metrics.
 
     Returns
     -------
@@ -23,8 +26,8 @@ def process_cubex(profile_file):
     calltree_df : pandas.DataFrame
         A DataFrame representation of the call tree object
     df : pandas.DataFrame
-        A dataframe containing the profiling data
-    conf_info : list
+        A dataframe containing the profiling data, from 
+    conv_info : list
         convertibility information (to inclusive) for the metrics contained
         in the dump.
 
@@ -34,14 +37,13 @@ def process_cubex(profile_file):
     logging.debug(f"Reading {profile_file}...")
     call_tree = ct.get_call_tree(profile_file)
     call_tree_df = ct.calltree_to_df(call_tree,full_path = True)
-    dump_df = cfu.get_dump(profile_file)
+    dump_df = cfu.get_dump(profile_file, exclusive)
 
-    df = pd.merge(dump_df, call_tree_df, how='inner', on='Cnode ID')
     conv_info = mt.get_inclusive_convertible_metrics(profile_file)
 
     return {'calltree': call_tree, 
             'calltree_df': call_tree_df, 
-            'df': df,
+            'df': dump_df,
             'conv_info': conv_info}
 
 
@@ -61,7 +63,7 @@ def check_column_sets(column_sets):
     logging.debug("Column sets are ok.")
 
 
-def process_multi(profile_files):
+def process_multi(profile_files, exclusive = True):
     ''' Processes ``.cubex`` files coming from different profiling runs, e.g.
     from a ``scalasca -analyze`` run.
    
@@ -73,6 +75,9 @@ def process_multi(profile_files):
     ----------
     profile_file : list
         List of ``.cubex`` filenames.
+    exclusive : bool
+        Whether to ask ``cube_dump`` for exclusive (True) or inclusive (False) 
+        metrics.
 
     Returns
     -------
@@ -86,46 +91,40 @@ def process_multi(profile_files):
     noncommon : pandas.DataFrame
         A data frame containing all the data relatige that are specific to 
         single ``.cubex`` files.
+    conv_info : list
+        A list of metrics that can be converted to inclusive.
 
     '''
     import pandas as pd
     # Assuming that the calltree info is equal for all
     # .cubex files, up to isomorphism.
-    first_file_info = process_cubex(profile_files[0])
+    first_file_info = process_cubex(profile_files[0], exclusive)
     call_tree = first_file_info['calltree']
     call_tree_df = first_file_info['calltree_df']
 
     logging.debug(f"Reading {len(profile_files)} files...")
-    dfs = [process_cubex(pf)['df'] for pf in profile_files]
+    outputs = [ process_cubex(pf, exclusive) for pf in profile_files]
+    dfs = [ output['df'].set_index(['Cnode ID','Thread ID']) for output in outputs ] 
+    conv_infos = [ output['conv_info'] for output in outputs ] 
 
-    def adjust_df(df):
-        # Function names, Cnode ID and Parent Cnode ID
-        # can always be retrieved from the full callpath.
-        # Cnode IDs could also change between '.cubex' files,
-        # in principle.
-        cols_to_drop = ['Cnode ID', 'Function Name', 'Parent Cnode ID']
-        # TODO: Move from using 'Thread ID' to the proper
-        #       full system path.
-        new_index_columns = ['Full Callpath', 'Thread ID']
-        return (df.drop(cols_to_drop,
-                        axis='columns').set_index(new_index_columns))
-
-    logging.debug(f"Adjusting dataframes...")
-    dfs2 = [adjust_df(df) for df in dfs]
+    conv_info = set.union(*conv_infos)
 
     # finding columns common to all DFs and creating
     # a dataframe for those
-    columns_df = [set(df.columns) for df in dfs2]
+    columns_df = [set(df.columns) for df in dfs]
+
+    check_column_sets(columns_df)
+
     common_cols = set.intersection(*columns_df)
 
-    dfs2_common = [df.loc[:, common_cols] for df in dfs2]
+    dfs_common = [df.loc[:, common_cols] for df in dfs]
 
-    for i, df2 in enumerate(dfs2_common):
-        df2.columns = pd.MultiIndex.from_tuples([(i, col)
+    for i, df in enumerate(dfs_common):
+        df.columns = pd.MultiIndex.from_tuples([(i, col)
                                                  for col in common_cols],
                                                 names=['run', 'metric'])
 
-    df_common = pd.concat(dfs2_common, axis='columns', join='inner')
+    df_common = pd.concat(dfs_common, axis='columns', join='inner')
 
     # finding columns specific to each DFs and creating a
     # dataframe for those
@@ -134,152 +133,62 @@ def process_multi(profile_files):
         columns.difference(common_cols) for columns in columns_df
     ]
 
-    dfs2_noncommon = [
+    dfs_noncommon = [
         df.loc[:, noncommon_columns]
-        for df, noncommon_columns in zip(dfs2, noncommon_columns_df)
+        for df, noncommon_columns in zip(dfs, noncommon_columns_df)
     ]
 
-    df_noncommon = pd.concat(dfs2_noncommon, axis='columns', join='inner')
-    # Using Cnode ID in the index instead of the full callpath
-    # (using the Cnode ID - full callpath relationship
-    #  from the first profile file)
-
-    tmp = call_tree_df.loc[:, ['Full Callpath', 'Cnode ID']].set_index(
-        'Full Callpath')
-
-    def replace_fcpath_with_cnodeID(df):
-        colnames = df.columns.names + ['Thread ID']
-        return (df
-                .unstack('Thread ID')
-                .pipe( lambda x: pd.DataFrame(
-                        data=x.values, 
-                        index=x.index, 
-                        columns=pd.Index(x.columns)))
-                .join(tmp, how='inner')
-                .set_index('Cnode ID') # nukes the current idx
-                .pipe( lambda x: pd.DataFrame(
-                        data=x.values,
-                        index=x.index,
-                        columns=pd.MultiIndex.from_tuples(
-                            x.columns, 
-                            names=colnames)
-                        )))
-
-    df_common = replace_fcpath_with_cnodeID(df_common)
-    df_noncommon = replace_fcpath_with_cnodeID(df_noncommon)
+    df_noncommon = (pd.concat(dfs_noncommon, axis='columns', join='inner')
+            .rename_axis(mapper = ['metric'], axis = 'columns'))
+    
 
     return {'tree'      : call_tree,
             'tree_df'   : call_tree_df,
             'common'    : df_common, 
-            'noncommon' : df_noncommon}
+            'noncommon' : df_noncommon,
+            'conv_info' : conv_info}
 
 
-def convert_series_to_inclusive(series, call_tree):
+def cnode_id_to_path(df,tree_df, full_path = True):
     '''
-    Converts a series having Cnode IDs as index from exclusive to inclusive.
-    Takes as input a CallTreeNode object (hopefully the root).
-
-    Notice: The results may be nonsensical unless the metric acted upon is
-            "INCLUSIVE convertible"
+    Converts the ``Cnode ID`` in the index of a DataFrame to function name 
+    or call path.
 
     Parameters
     ----------
-    series : Series
-        A series representing exclusive measurements
-    call_tree : CallTreeNode
-        A recursive representation of the call tree.
-
-    Returns
-    -------
-    res : Series
-        A series having the same structure as the input, but with data summed
-        over following the hierarchy given by the call_tree object.
-
-    '''
-    # LRU cache does not work because of 
-    # TypeError: unhashable type: 'list'
-    #from functools import lru_cache
-    #@lru_cache
-    def aggregate(root):
-        value = series.loc[root.cnode_id]
-        for child in root.children:
-             value += aggregate(child)
-        return value
-
-    import pandas as pd
-    return (pd.DataFrame(
-            data = [ (node.cnode_id,aggregate(node)) 
-                for node in ct.iterate_on_call_tree(call_tree) ],
-            columns = ['Cnode ID','metric'])
-        .set_index('Cnode ID')
-        .metric)
-
-
-def select_metrics(df, selected_metrics):
-    ''' Selects `selected_metrics` out of a DataFrame.
-
-    This function solves some problems:
-
-    - Finding the ``metric`` level in ``df.columns``
-    - Selecting, out of ``selected_metrics`` only the ones that are also in the
-      Data Frame.
-
-
-    Parameters
-    ----------
-    df: DataFrame
-        A dataframe containing the metrics to be selected as columns. 
-        The dataframe columns are a `MultiIndex`
-    selected_metrics: iterable
-        Contains the names of the metrics that need need to be selected
-
-    Returns
-    -------
-    res : DataFrame
-        a DataFrame contaning only the selected metrics.
-        
-    '''
-    # finding the level in the columns with the metrics
-    metric_level = df.columns.names.index('metric')
-    nlevels = len(df.columns.names)
-
-    # choosing the metrics
-    possible_metrics = set(selected_metrics).intersection(
-            set(df.columns.levels[metric_level]))
-
-    metric_indexer = [slice(None)]*nlevels
-    metric_indexer[metric_level] = list(possible_metrics)
-
-    return df.loc[:,tuple(metric_indexer)]
- 
-
-def convert_df_to_inclusive(df_convertible, call_tree):
-    '''
-    Converts a DataFrame having Cnode IDs as index from exclusive to inclusive.
-
-    Parameters
-    ----------
-    df_convertible : DataFrame
-        A DataFrame containing only metrics that can be converted safely from
-        exclusive to inclusive.
-    call_tree: CallTreeNode
-        A recursive representation of the call tree.
-
-    Returns
-    -------
-    res : DataFrame
-        A DataFrame
+    df : pandas.DataFrame
+        DataFrame where the conversion needs to happen
+    tree_df: pandas.DataFrame
+        DataFram representation of the call tree, which contains the 
+        information for the translation.
+    full_path : bool
+        Whether or not to replace the ``Cnode ID`` with a full call path 
+        (``True``) or with the function name to which the ``Cnode ID`` has been 
+        appended.
 
     '''
-    def aggregate(root):
-        value = df_convertible.loc[root.cnode_id,:]
-        for child in root.children:
-             value += aggregate(child)
-        return value
+    cnames = list(df.columns.names)
+    inames = list(df.index.names)
 
-    import pandas as pd
-    return (pd.concat(objs = [ aggregate(n) for n in ct.iterate_on_call_tree(call_tree) ],
-                keys = [ n.cnode_id for n in ct.iterate_on_call_tree(call_tree)])
-                .rename_axis(mapper = ['Cnode ID', 'metric', 'Thread ID'],axis = 'index')
-                .unstack(['metric','Thread ID'])
-                )
+    assert None not in cnames, "workaround not implemented"
+    assert None not in inames, "workaround not implemented"
+
+    new_index_col = 'Full Callpath' if full_path else 'Short Callpath'
+    needed_tree_cols  = ['Cnode ID', new_index_col]
+
+    tree_df['Short Callpath'] = tree_df['Function Name'].str.cat(tree_df['Cnode ID'].astype(str),sep = ',')
+
+    needed_tree_data  = tree_df[needed_tree_cols]
+
+    new_index_levels = list(inames)
+    new_index_levels[inames.index('Cnode ID')] = new_index_col
+
+    import pandas as pd 
+    return ( pd.merge(
+        df.stack(cnames).reset_index(),
+        needed_tree_data,
+        on = 'Cnode ID')
+        .drop('Cnode ID', axis = 'columns')#, new_index_levels, cnames)
+        .set_index(new_index_levels+cnames)[0]
+        .unstack(cnames))
+

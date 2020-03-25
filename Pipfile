@@ -14,5 +14,4 @@ sphinx = "*"
 numpydoc = "*"
 sphinx-rtd-theme = "*"
 
-[requires]
-python_version = "3.8"
+# Python >=3.6
