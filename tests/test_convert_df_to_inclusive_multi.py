@@ -6,7 +6,7 @@ using the 'incl' flag.
 '''
 import calltree as ct
 import merger as mg
-import inclusive_conversion as ic
+import calltree_conversions as cc
 import metrics as mt
 
 import pandas as pd
@@ -32,10 +32,10 @@ calltree = output_excl['tree']
 # common 
 # dataframe conversions
 print("Common metrics:")
-common_excl = ic.select_metrics( common_excl, convertible_metrics)
-common_incl_comp = ic.convert_df_to_inclusive(common_excl, calltree).sort_index()
+common_excl = cc.select_metrics( common_excl, convertible_metrics)
+common_incl_comp = cc.convert_df_to_inclusive(common_excl, calltree).sort_index()
 
-common_incl = ic.select_metrics(common_incl, convertible_metrics)
+common_incl = cc.select_metrics(common_incl, convertible_metrics)
 
 assert (common_excl.values != common_incl.values).any()
 print("Inclusive and exclusive results partially differ as expected.")
@@ -51,10 +51,10 @@ print( "Results from convert_df_to_inclusive coincide"
 # dataframe conversions
 tolerance = 3e-3
 print("Non common metrics:")
-noncommon_excl = ic.select_metrics( noncommon_excl, convertible_metrics)
-noncommon_incl_comp = ic.convert_df_to_inclusive(noncommon_excl, calltree).sort_index()
+noncommon_excl = cc.select_metrics( noncommon_excl, convertible_metrics)
+noncommon_incl_comp = cc.convert_df_to_inclusive(noncommon_excl, calltree).sort_index()
 
-noncommon_incl = ic.select_metrics(noncommon_incl, convertible_metrics)
+noncommon_incl = cc.select_metrics(noncommon_incl, convertible_metrics)
 
 assert (noncommon_excl.values != noncommon_incl.values).any()
 print("Inclusive and exclusive results partially differ as expected.")

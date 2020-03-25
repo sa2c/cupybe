@@ -52,7 +52,8 @@ Contents
    calltree
    cube_file_utils
    metrics
-   inclusive_conversion
+   calltree_conversions
+   index_conversions
 
 Indices and tables
 ++++++++++++++++++

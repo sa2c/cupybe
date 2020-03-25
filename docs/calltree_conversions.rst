@@ -1,9 +1,9 @@
-Module ``inclusive_conversion``
+Module ``calltree_conversions``
 ===============================
 
-.. automodule:: inclusive_conversion
+.. automodule:: calltree_conversions
 
-.. currentmodule:: inclusive_conversion
+.. currentmodule:: calltree_conversions
 
 The ``select_metrics`` function may help in selecting only the metrics that can
 be transformed safely. To have a list of metrics to select, see 

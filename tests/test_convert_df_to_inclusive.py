@@ -6,7 +6,7 @@ using the 'incl' flag.
 '''
 import calltree as ct
 import cube_file_utils as cfu
-import inclusive_conversion as ic
+import calltree_conversions as cc
 import metrics as mt
 import test_utils as tu
 
@@ -32,10 +32,10 @@ calltree = ct.get_call_tree('profile.cubex')
 
 # dataframe conversion
 
-dump_excl = ic.select_metrics( dump_excl, convertible_metrics)
-dump_incl_comp = ic.convert_df_to_inclusive(dump_excl, calltree).sort_index()
+dump_excl = cc.select_metrics( dump_excl, convertible_metrics)
+dump_incl_comp = cc.convert_df_to_inclusive(dump_excl, calltree).sort_index()
 
-dump_incl = ic.select_metrics(dump_incl, convertible_metrics)
+dump_incl = cc.select_metrics(dump_incl, convertible_metrics)
 
 assert (dump_excl.values != dump_incl.values).any()
 print("Inclusive and exclusive results partially differ as expected.")
@@ -61,7 +61,7 @@ for col in dump_excl:
     series_excl = dump_excl[col]
     series_incl = dump_incl[col]
 
-    series_incl_comp = ic.convert_series_to_inclusive(series_excl,
+    series_incl_comp = cc.convert_series_to_inclusive(series_excl,
                                                       calltree).sort_index()
 
     assert any(series_excl != series_incl)

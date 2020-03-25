@@ -14,8 +14,4 @@ Single/Multi ``.cubex`` files processing
 .. _process-multi:
 .. autofunction:: process_multi
 
-Conversions between ``Cnode ID`` and function names 
-###################################################
-
-.. autofunction:: convert_index
 

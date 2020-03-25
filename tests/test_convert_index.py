@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import merger as mg
+import index_conversion as ic
 from sys import argv
 
 input_files = argv[1:]
@@ -26,7 +27,7 @@ for target in ['Full Callpath',   # one way...
 
     print(f"Target : {target}")
     # Common metrics
-    common = mg.convert_index(common,tree_df,target)
+    common = ic.convert_index(common,tree_df,target)
     print(common.index.names   )
     print(common.columns.names )
     
@@ -37,7 +38,7 @@ for target in ['Full Callpath',   # one way...
     
     # Non common metrics 
     
-    noncommon = mg.convert_index(noncommon,tree_df,target)
+    noncommon = ic.convert_index(noncommon,tree_df,target)
     print(noncommon.index.names  )    
     print(noncommon.columns.names)
     

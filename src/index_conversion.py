@@ -1,0 +1,63 @@
+'''
+This module manages the conversion of indices between different formats,
+e.g. ``Cnode IDs``, ``Full Callpath`` and ``Short Callpath``.
+
+``Short Callpath`` means the name of the function followed by the ``Cnode ID``,
+separated by comma.
+'''
+
+def convert_index(df,tree_df, target = None):
+    '''
+    Converts the the index of a DataFrame to ``Short Callpath``, 
+    ``Full Callpath`` or ``Cnode ID``.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        DataFrame where the conversion needs to happen
+    tree_df: pandas.DataFrame
+        DataFrame representation of the call tree, which contains the 
+        information for the translation.
+    target : str 
+        Can be ``Short Callpath``, ``Full Callpath``, ``Cnode ID`` or ``None``.
+
+    Returns
+    -------
+    res : pandas.DataFrame
+        A DataFrame identical to ``df``, but with a different index.
+
+    '''
+    cnames = list(df.columns.names)
+    inames = list(df.index.names)
+
+    assert None not in cnames, "workaround not implemented"
+    assert None not in inames, "workaround not implemented"
+
+    new_index_col = target 
+    possible_index_cols = ["Short Callpath", "Full Callpath", "Cnode ID"]
+
+    from itertools import filterfalse
+    index_candidates = list(filterfalse( lambda x : x not in possible_index_cols, inames))
+    
+    assert len(index_candidates) == 1, "Not clear which index to use."
+
+    old_index_col = index_candidates[0]
+    needed_tree_cols  = [old_index_col, new_index_col]
+
+    if 'Short Callpath' in needed_tree_cols:  
+        tree_df['Short Callpath'] = tree_df['Function Name'].str.cat(tree_df['Cnode ID'].astype(str),sep = ',')
+
+    needed_tree_data  = tree_df[needed_tree_cols]
+
+    new_index_levels = list(inames)
+    new_index_levels[inames.index(old_index_col)] = new_index_col
+
+    import pandas as pd 
+    return ( pd.merge(
+        df.stack(cnames).reset_index(),
+        needed_tree_data,
+        on = old_index_col)
+        .drop(old_index_col, axis = 'columns')#, new_index_levels, cnames)
+        .set_index(new_index_levels+cnames)[0]
+        .unstack(cnames))
+
