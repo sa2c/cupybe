@@ -1,5 +1,5 @@
-Module ``calltree``
-===================
+``calltree``
+============
 .. automodule:: calltree
 .. currentmodule:: calltree
 .. _call-tree-node:

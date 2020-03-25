@@ -1,5 +1,5 @@
-Module ``metrics``
-==================
+``metrics``
+===========
 
 .. automodule:: metrics
 .. currentmodule:: metrics

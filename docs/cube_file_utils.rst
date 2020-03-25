@@ -1,5 +1,5 @@
-Module ``cube_file_utils``
-==========================
+``cube_file_utils``
+===================
 
 .. automodule:: cube_file_utils
 .. currentmodule:: cube_file_utils

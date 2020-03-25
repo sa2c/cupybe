@@ -1,5 +1,5 @@
-Module ``merger``
-=================
+``merger``
+==========
 
 .. automodule:: merger
 

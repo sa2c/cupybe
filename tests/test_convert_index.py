@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import merger as mg
-import index_conversion as ic
+import index_conversions as ic
 from sys import argv
 
 input_files = argv[1:]

@@ -1,9 +1,9 @@
-Module ``index_conversion``
-===========================
+``index_conversions``
+=====================
 
-.. automodule:: index_conversion
+.. automodule:: index_conversions
 
-.. currentmodule:: index_conversion
+.. currentmodule:: index_conversions
 
 .. _convert-index:
 .. autofunction:: convert_index

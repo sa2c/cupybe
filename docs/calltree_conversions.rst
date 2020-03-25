@@ -1,5 +1,5 @@
-Module ``calltree_conversions``
-===============================
+``calltree_conversions``
+========================
 
 .. automodule:: calltree_conversions
 

@@ -42,8 +42,8 @@ Notes
   Anyway it is possible to ask ``cube_dump`` for the inclusive metrics if one 
   likes.
   
-Contents
-++++++++
+Modules
++++++++
 
 .. toctree::
    :maxdepth: 2
@@ -54,6 +54,7 @@ Contents
    metrics
    calltree_conversions
    index_conversions
+
 
 Indices and tables
 ++++++++++++++++++
