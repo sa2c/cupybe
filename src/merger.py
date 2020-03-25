@@ -9,7 +9,10 @@ import logging
 
 def process_cubex(profile_file, exclusive = True):
     '''
-    Processes a single ``.cubex`` file, returning a number of 
+    Processes a single ``.cubex`` file, returning the numeric data from the 
+    profiling, plus information about the call tree and the metrics.
+
+    Note: returns a *dict*.
 
     Parameters
     ----------
@@ -65,16 +68,18 @@ def check_column_sets(column_sets):
 
 def process_multi(profile_files, exclusive = True):
     ''' Processes ``.cubex`` files coming from different profiling runs, e.g.
-    from a ``scalasca -analyze`` run.
+    from a ``scalasca -analyze`` run, aggregating the results.
    
     Assumes that there is a set of metrics which are common to all files,
     and that no pair of files share metrics that are not shared by all the 
     others.
 
+    Note: returns a *dict*.
+
     Parameters
     ----------
     profile_file : list
-        List of ``.cubex`` filenames.
+        List of ``.cubex`` filenames;
     exclusive : bool
         Whether to ask ``cube_dump`` for exclusive (True) or inclusive (False) 
         metrics.
@@ -82,15 +87,15 @@ def process_multi(profile_files, exclusive = True):
     Returns
     -------
     tree : calltree.CallTreeNode
-        A call tree recursive structure.
+        A call tree recursive structure;
     tree_df : pandas.DataFrame
-        DataFrame representation of the call tree.
+        DataFrame representation of the call tree;
     common : pandas.DataFrame
         A data frame containing all the data relative to metrics that are 
-        shared among *all* the ``.cubex`` files.
+        shared among *all* the ``.cubex`` files;
     noncommon : pandas.DataFrame
         A data frame containing all the data relatige that are specific to 
-        single ``.cubex`` files.
+        single ``.cubex`` files;
     conv_info : list
         A list of metrics that can be converted to inclusive.
 
@@ -165,6 +170,12 @@ def cnode_id_to_path(df,tree_df, full_path = True):
         Whether or not to replace the ``Cnode ID`` with a full call path 
         (``True``) or with the function name to which the ``Cnode ID`` has been 
         appended.
+
+    Returns
+    -------
+    res : pandas.DataFrame
+        A DataFrame identical to ``df``, but with function names or full call 
+        paths instead of ``Cnode ID``/s in the index.
 
     '''
     cnames = list(df.columns.names)
