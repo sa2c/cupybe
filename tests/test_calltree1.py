@@ -14,7 +14,7 @@ if __name__ == '__main__':
     call_tree_lines = ct.get_call_tree_lines(cube_dump_w_text)
     calltree = ct.calltree_from_lines(call_tree_lines)
     max_len = ct.get_max_len(calltree)
-    calltree_repr = ct.calltree_to_string(calltree, '', max_len)
+    calltree_repr = ct.calltree_to_string(calltree, max_len)
     print("Tree Representation:")
     print(calltree_repr)
     
@@ -38,7 +38,7 @@ if __name__ == '__main__':
         ])))
     
     calltree_repr = (re.sub('[\-:]', '',
-                            ct.calltree_to_string(calltree, '', 0)).replace(
+                            ct.calltree_to_string(calltree, 0)).replace(
                                 '|', ' ').replace('   ', '  '))
     
     for i, (linea, lineb) in enumerate(

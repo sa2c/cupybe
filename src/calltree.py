@@ -35,12 +35,28 @@ CallTreeNode.__repr__ = lambda x: calltree_to_repr(x)
 # Only members that are currently used.
 CallTreeLine = namedtuple('CallTreeLine', ['fname', 'cnode_id', 'level'])
 
+def iterate_on_call_tree(root,maxlevel = None):
+    '''Iterator on a tree (Generator).
+    Can be used for searching in the tree, depth-first.
 
-def iterate_on_call_tree(root):
-    '''Iterator on a tree.'''
+    Parameters
+    ----------
+    root: CallTreeNode
+        a CallTreeNode representing the root of the tree;
+    maxlevel : int or None
+        the maximum depth of the recursion (``None`` means unlimited).
+
+    Returns
+    -------
+    res : CallTreeNode
+        Iterator yielding ``CallTreeNode``\s.
+        
+    '''
     yield root
-    for child in root.children:
-        yield from iterate_on_call_tree(child)
+    new_maxlevel = maxlevel - 1 if maxlevel is not None else None
+    if len(root.children) != 0 and (maxlevel is None or maxlevel > 0):
+        for child in root.children :
+            yield from iterate_on_call_tree(child, new_maxlevel)
 
 
 def calltree_to_df(call_tree, full_path = False):
@@ -80,18 +96,41 @@ def calltree_to_df(call_tree, full_path = False):
     return df
 
 
-def calltree_to_string(root, line_prefix='', max_len=60):
+def calltree_to_string(root, max_len=60, maxlevel = None,payload = None):
     ''' For an understandable, ascii art representation of the call tree.
     Recursive function.
+
+    Parameters
+    ----------
+    root : CallTreeNode
+        The root of the tree;
+    max_len : int
+        Desired length of the printed line;
+    maxlevel : int, None
+        Maximum depth of the printed tree. If ``None``, no limit;
+    payload : indexable
+        Something that can be indexed by ``Cnode ID``, e.g. an ordered Series.
+
+    Returns
+    -------
+    res : string
+        string representation of the call tree and the payload.
     '''
+    return _calltree_to_string(root,'',max_len,maxlevel, payload)
+
+
+def _calltree_to_string(root, line_prefix='', max_len=60, maxlevel = None,payload = None):
     res = line_prefix + f"-{root.fname}:"
-    res += ' ' * (max_len - len(res))
-    res += f"{root.cnode_id}\n"
-    if len(root.children) != 0:
+    to_print = str(root.cnode_id if payload is None else payload[root.cnode_id])
+    res += ' ' * (max_len - len(res) - len(to_print))
+    res += to_print + '\n'
+    new_maxlevel = maxlevel - 1 if maxlevel is not None else None
+    if len(root.children) != 0 and (maxlevel is None or maxlevel > 0):
         for child in root.children[:-1]:
-            res += calltree_to_string(child, line_prefix + '  |', max_len)
-        res += calltree_to_string(root.children[-1], line_prefix + '   ',
-                                  max_len)
+            res += _calltree_to_string(child, line_prefix + '  |',
+                                      max_len, new_maxlevel, payload)
+        res += _calltree_to_string(root.children[-1], line_prefix + '   ',
+                                  max_len, new_maxlevel, payload) 
     return res
 
 

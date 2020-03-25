@@ -49,7 +49,9 @@ def convert_index(df,tree_df, target = None):
     assert None not in cnames, "workaround not implemented"
     assert None not in inames, "workaround not implemented"
     import pandas as pd 
-    assert type(df) != pd.Series
+    assert type(df) == pd.DataFrame
+    assert type(tree_df) == pd.DataFrame or tree_df is None
+    assert type(target) == str or target is None
 
     new_index_col = target 
     possible_index_cols = ["Short Callpath", "Full Callpath", "Cnode ID"]
