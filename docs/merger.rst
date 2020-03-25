@@ -17,5 +17,5 @@ Single/Multi ``.cubex`` files processing
 Conversions between ``Cnode ID`` and function names 
 ###################################################
 
-.. autofunction:: cnode_id_to_path
+.. autofunction:: convert_index
 

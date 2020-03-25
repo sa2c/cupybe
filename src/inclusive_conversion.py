@@ -121,6 +121,7 @@ def convert_df_to_inclusive(df_convertible, call_tree):
 
     '''
     # In order to be converted, the index must contain only ``Cnode ID``.
+    assert 'Cnode ID' in df_convertible.index.names, "Cnode ID not in index!"
     levels_to_unstack = [
         name for name in df_convertible.index.names if name != 'Cnode ID'
     ]

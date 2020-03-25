@@ -10,4 +10,7 @@ run_test ./test_calltree2.py profile.cubex && \
 run_test ./test_process_multi.py scalasca_output && \
 run_test ./test_convert_df_to_inclusive.py profile.cubex && \
 run_test ./test_convert_df_to_inclusive_multi.py scalasca_output/*/profile.cubex && \
-run_test ./test_cnodeid_to_fname.py scalasca_output/*/profile.cubex
+run_test ./test_convert_index.py scalasca_output/*/profile.cubex
+
+echo "Testing build of docs"
+cd ../docs && make html
