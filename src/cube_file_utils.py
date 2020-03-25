@@ -18,9 +18,18 @@ def get_cube_dump_w_text(profile_file):
         Output of ``cube_dump -w``
     '''
     import subprocess
-    cube_dump_process = subprocess.run(['cube_dump', '-w', profile_file],
+    import sys
+    if sys.version_info >= (3,7,0):
+        cube_dump_process = subprocess.run(['cube_dump', '-w', profile_file],
                                        capture_output=True,
                                        text=True)
+
+
+    if sys.version_info < (3,7,0):
+        cube_dump_process = subprocess.run(['cube_dump', '-w', profile_file],
+                                       stdout = subprocess.PIPE,
+                                       universal_newlines=True)
+ 
     return cube_dump_process.stdout
 
 def get_lines(cube_dump_w_text, start_hint, end_hint):

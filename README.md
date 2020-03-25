@@ -6,8 +6,8 @@ extract and organise data contained in '.cubex' files.
 The documentation is hosted on [readthedocs.io](https://pycubelib.readthedocs.io/en/latest/index.html).
 
 ## Dependencies
-* Python >= 3.7. For packages, see `Pipfile`.
-* Tested with CubeLib 4.4.4.
+* Python >= 3.6. For packages, see `Pipfile`.
+* Tested with CubeLib 4.4.4, Python (3.6.10 | 3.7.7 | 3.8.2 )
 
 ## Notes
 * The script `/test/runtests.sh` can be used to conveniently run the few tests
