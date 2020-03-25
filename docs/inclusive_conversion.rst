@@ -14,3 +14,4 @@ be transformed safely. To have a list of metrics to select, see
 .. autofunction:: convert_df_to_inclusive
 
 .. autofunction:: convert_series_to_inclusive
+

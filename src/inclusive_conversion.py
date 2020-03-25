@@ -26,6 +26,12 @@ def convert_series_to_inclusive(series, call_tree):
         over following the hierarchy given by the call_tree object.
 
     '''
+    import pandas as pd 
+    if type(series.index) == pd.MultiIndex and len(series.index.levels) > 1:
+        raise NotImplementedError("MultiIndex not supported for series")
+
+    assert series.index.name == "Cnode ID","MultiIndex not supported for series"
+
     # LRU cache does not work because of 
     # TypeError: unhashable type: 'list'
     #from functools import lru_cache
@@ -50,10 +56,11 @@ def select_metrics(df, selected_metrics):
 
     This function solves some problems:
 
-    - Finding the ``metric`` level in ``df.columns``
+    - Finding the ``metric`` level in ``df.columns``;
     - Selecting, out of ``selected_metrics`` only the ones that are also in the
-      Data Frame.
-
+      Data Frame;
+    - Dealing with both the cases when ``df.columns`` is a 
+      ``pandas.MultiIndex`` or a ``pandas.Index``.
 
     Parameters
     ----------
@@ -70,39 +77,34 @@ def select_metrics(df, selected_metrics):
         
     '''
     # finding the level in the columns with the metrics
-    metric_level = df.columns.names.index('metric')
-    nlevels = len(df.columns.names)
+    import pandas as pd
+    if type(df.columns) == pd.MultiIndex:
+        metric_level = df.columns.names.index('metric')
+        nlevels = len(df.columns.names)
+        df_metrics = df.columns.levels[metric_level]
+    elif type(df.columns) == pd.Index:
+        assert df.columns.name == 'metric'
+        metric_level = 0 
+        nlevels = 1 
+        df_metrics = df.columns
 
     # choosing the metrics
     possible_metrics = set(selected_metrics).intersection(
-            set(df.columns.levels[metric_level]))
+            set(df_metrics))
 
-    metric_indexer = [slice(None)]*nlevels
-    metric_indexer[metric_level] = list(possible_metrics)
+    if type(df.columns) == pd.MultiIndex:
+        metric_indexer = [slice(None)]*nlevels
+        metric_indexer[metric_level] = list(possible_metrics)
+        return df.loc[:,tuple(metric_indexer)]
+    elif type(df.columns) == pd.Index:
+        return df.loc[:,list(possible_metrics)]
 
-    return df.loc[:,tuple(metric_indexer)]
 
-
-def transpose_for_conversion(df):
-    '''
-    In order to be converted, the index must contain only ``Cnode ID``.
-
-    Parameters
-    ----------
-    df : pandas.DataFrame
-        The DataFrame to be transposed
-
-    Returns
-    -------
-    transposed: pandas.DataFrame
-        The transposed DataFrame with ``Cnode ID`` as index.
-    '''
-    levels_to_unstack = [ name for name in df.index.names if name != 'Cnode ID']
-    return df.unstack(levels_to_unstack)
 
 def convert_df_to_inclusive(df_convertible, call_tree):
     '''
-    Converts a DataFrame having Cnode IDs as index from exclusive to inclusive.
+    Converts a DataFrame from exclusive to inclusive. A level named 
+    ``Cnode ID`` must be in the index.
 
     Parameters
     ----------
@@ -118,17 +120,30 @@ def convert_df_to_inclusive(df_convertible, call_tree):
         A DataFrame
 
     '''
+    # In order to be converted, the index must contain only ``Cnode ID``.
+    levels_to_unstack = [
+        name for name in df_convertible.index.names if name != 'Cnode ID'
+    ]
+    df_transposed = df_convertible.unstack(levels_to_unstack)
+
     def aggregate(root):
-        value = df_convertible.loc[root.cnode_id,:]
+        value = df_transposed.loc[root.cnode_id,:]
         for child in root.children:
              value += aggregate(child)
         return value
 
-    names = df_convertible.columns.names
+    names = df_transposed.columns.names
 
     import pandas as pd
-    return (pd.concat(objs = [ aggregate(n) for n in ct.iterate_on_call_tree(call_tree) ],
-                keys = [ n.cnode_id for n in ct.iterate_on_call_tree(call_tree)])
+    return (pd.concat(
+                objs = [ 
+                    aggregate(n) for n in ct.iterate_on_call_tree(call_tree) 
+                    ],
+                keys = [ 
+                    n.cnode_id for n in ct.iterate_on_call_tree(call_tree)
+                    ]
+                )
                 .rename_axis(mapper = ['Cnode ID'] + names,axis = 'index')
                 .unstack(names)
+                .stack(levels_to_unstack)
                 )

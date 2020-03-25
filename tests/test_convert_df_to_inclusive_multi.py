@@ -19,11 +19,11 @@ input_files = argv[1:]
 output_excl = mg.process_multi(input_files,exclusive = True)
 output_incl = mg.process_multi(input_files,exclusive = False)
 
-common_excl  = output_excl['common'].pipe(ic.transpose_for_conversion).sort_index()
-common_incl  = output_incl['common'].pipe(ic.transpose_for_conversion).sort_index()
+common_excl  = output_excl['common'].sort_index()
+common_incl  = output_incl['common'].sort_index()
 
-noncommon_excl  = output_excl['noncommon'].pipe(ic.transpose_for_conversion).sort_index()
-noncommon_incl  = output_incl['noncommon'].pipe(ic.transpose_for_conversion).sort_index()
+noncommon_excl  = output_excl['noncommon'].sort_index()
+noncommon_incl  = output_incl['noncommon'].sort_index()
 
 
 convertible_metrics = output_excl['conv_info']

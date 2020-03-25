@@ -22,7 +22,7 @@ def get_df(exclusive):
     return (cfu.get_dump(profile_file=input_file, exclusive=exclusive)
         .set_index([ 'Cnode ID', 'Thread ID' ])
         .rename_axis(mapper=['metric'], axis='columns')
-        .pipe(ic.transpose_for_conversion).sort_index())
+        .sort_index())
 
 dump_excl = get_df(exclusive = True)
 
@@ -50,6 +50,12 @@ print(
 )
 
 # series conversion
+def transform(df):
+    return df.unstack( [ name for name in df.index.names if name != 'Cnode ID' ] )
+
+dump_excl = transform(dump_excl)
+dump_incl = transform(dump_incl)
+
 for col in dump_excl:
     print(f"Processing column {col}...")
     series_excl = dump_excl[col]
