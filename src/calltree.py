@@ -12,8 +12,9 @@ import re
 from cube_file_utils import get_lines, get_cube_dump_w_text
 
 # Only members that are currently used.
-CallTreeNode = namedtuple('CallTreeNode',
-                          ['fname', 'cnode_id', 'parent', 'children'])
+CallTreeNode = namedtuple(
+    "CallTreeNode", ["fname", "cnode_id", "parent", "children", "level", "attrs"]
+)
 """A node of the call tree.
 
 .. py:attribute:: fname
@@ -33,12 +34,6 @@ CallTreeNode = namedtuple('CallTreeNode',
    A list of bindings to child nodes.
 
 """
-CallTreeNode.__repr__ = calltree_to_repr
-
-CallTreeNode.__repr__ = lambda x: calltree_to_repr(x)
-
-# Only members that are currently used.
-CallTreeLine = namedtuple('CallTreeLine', ['fname', 'cnode_id', 'level'])
 
 
 def iterate_on_call_tree(root, maxlevel=None):
@@ -156,6 +151,9 @@ def calltree_to_repr(root):
     return "\n".join(res)
 
 
+CallTreeNode.__repr__ = calltree_to_repr
+
+
 def get_max_len(root):
     """
     For nicer printing. Not very precise.
@@ -174,7 +172,7 @@ def get_fpath_vs_id(root, parent_full_callpath=""):
     return data
 
 
-def parse_line(line):
+def create_node(line, parent, level):
     """
     Parse a line in the call tree graph output by 'cube_dump -w'
     returning the name, the node id and the level.
@@ -183,61 +181,94 @@ def parse_line(line):
     '    |-MPI_Finalize  [ ( id=163,   mod=), -1, -1, paradigm=mpi, role=function, url=, descr=, mode=MPI]'
     OUTPUT:
     ('MPI_Finalize',163,2)
-    '''
-    splitpoint = line.find('[')
-    fun_name = re.search('(\w+)\s+$', line[:splitpoint]).groups()[0]
-    cnode_id = re.search('id=([0-9]+)', line[splitpoint:]).groups()[0]
+    """
 
-    # The following assumes that cube_dump uses 2 spaces for each level
-    # This might change!
-    splitpoint = re.search('\w', line).span()[0]
-    level = line[:splitpoint].count(' ') / 2
-    assert level == int(level), "Error in determining level"
-    return CallTreeLine(fun_name, int(cnode_id), int(level))
+    splitpoint = line.find("[")
+    fun_name = re.search("(\w+)\s+$", line[:splitpoint]).groups()[0]
+
+    # find the info string between square brackets
+    info = re.search("\[(.*)]", line).groups()[0]
+    # remove brackets around id/mod
+    info = re.sub("\(|\)", "", info).strip()
+
+    # split entries into lists of key/value pairs
+    entry_pairs = filter(
+        lambda x: len(x) == 2, [entry.split("=") for entry in info.split(",")]
+    )
+
+    # strip whitespace
+    attrs = {key.strip(): value.strip() for key, value in entry_pairs}
+
+    return CallTreeNode(
+        fname=fun_name,
+        cnode_id=int(attrs["id"]),
+        parent=parent,
+        children=[],
+        level=level,
+        attrs=attrs,
+    )
 
 
 def get_call_tree_lines(cube_dump_w_text):
-    '''
+    """
     Select the lines relative to the call tree out of the
     output of 'cube_dump -w'.
-    '''
-    return get_lines(cube_dump_w_text,start_hint = 'CALL TREE',
-            end_hint = 'SYSTEM DIMENSION')
-
-
-def calltree_from_lines(call_tree_lines):
     """
-    Get a call tree from the relevant part of the output of the
-    command 
+    return get_lines(
+        cube_dump_w_text, start_hint="CALL TREE", end_hint="SYSTEM DIMENSION"
+    )
 
-    cube_dump -w <cubex_file>
 
-    It is assumed that the tree is printed in a depth-first order.
+def calltree_from_lines(input_lines):
+    """
+    Build the call tree structure from the output
     """
 
-    parsed_lines = [parse_line(line) for line in call_tree_lines]
+    # list of non-zero length lines
+    lines = list(filter(lambda x: len(x) > 0, input_lines))
 
-    logging.debug(f"No of functions found: {len(parsed_lines)}\n")
-    root = parsed_lines[0]
-    assert (
-        root.level == 0
-    ), f"First node is not root (level={root.level}), not depth first order?"
-    res = CallTreeNode(root.fname, root.cnode_id, None, [])
-    last_parent = res
+    root_node = create_node(lines.pop(0), parent=None, level=0)
 
-    def add_children(node, level, remaining_lines):
-        "Recursively adds children to node"
-        while len(remaining_lines) > 0 and remaining_lines[0].level > level:
-            new_line = remaining_lines[0]
-            remaining_lines = remaining_lines[1:]
-            new_node = CallTreeNode(new_line.fname, new_line.cnode_id, node, [])
-            remaining_lines = add_children(new_node, new_line.level, remaining_lines)
-            node.children.append(new_node)
-        return remaining_lines
+    # last_node tracks the last node created
+    last_node = root_node
 
-    add_children(res, 0, parsed_lines[1:])
+    for line in lines[1:]:
+        siblings = []
 
-    return res
+        level = line.count("|")
+
+        if level == last_node.level:
+            # ----- Sibling to last node -----
+            # In this case, create a node and add it to the siblings list.
+            # The parent of the last node is the parent of this node.
+
+            last_node = create_node(line, last_node.parent, level=level)
+
+        elif level > last_node.level:
+            # ----- Child to last node -----
+            # We've moved down to a child level, with the last node as a parent
+            # so we need to change the `siblings` list to point to the children
+            # of the last node, and pass the last node as parent to create_node
+
+            siblings = last_node.children
+
+            last_node = create_node(line, parent=last_node, level=level)
+        else:
+            # ----- Parent to last node -----
+            # Since we're moving up a level compared to the previous node,
+            # so `siblings` should refer to siblings of the parent.
+            # We obtain this as the children of the grandparent node.
+            # The parent of this new node will be the grandparent
+
+            grandparent = last_node.parent.parent
+
+            siblings = grandparent.children
+
+            last_node = create_node(line, parent=grandparent, level=level)
+
+        siblings.append(last_node)
+
+    return root_node
 
 
 def get_call_tree(profile_file):
