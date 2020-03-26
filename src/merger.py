@@ -9,9 +9,9 @@ import logging
 import pandas as pd
 
 
-def process_cubex(profile_file, exclusive = True):
-    '''
-    Processes a single ``.cubex`` file, returning the numeric data from the 
+def process_cubex(profile_file, exclusive=True):
+    """
+    Processes a single ``.cubex`` file, returning the numeric data from the
     profiling, plus information about the call tree and the metrics.
 
     Note: returns a *dict*.
@@ -36,26 +36,28 @@ def process_cubex(profile_file, exclusive = True):
         convertibility information (to inclusive) for the metrics contained
         in the dump.
 
-    '''
+    """
     # Getting all callgraph information
     logging.debug(f"Reading {profile_file}...")
     call_tree = ct.get_call_tree(profile_file)
-    call_tree_df = ct.calltree_to_df(call_tree,full_path = True)
+    call_tree_df = ct.calltree_to_df(call_tree, full_path=True)
     dump_df = cfu.get_dump(profile_file, exclusive)
 
     conv_info = mt.get_inclusive_convertible_metrics(profile_file)
 
-    return {'calltree': call_tree, 
-            'calltree_df': call_tree_df, 
-            'df': dump_df,
-            'conv_info': conv_info}
+    return {
+        "calltree": call_tree,
+        "calltree_df": call_tree_df,
+        "df": dump_df,
+        "conv_info": conv_info,
+    }
 
 
 def check_column_sets(column_sets):
-    ''' 
+    """
     Checking that any pair of column sets shares only
     the columns that are common to all sets.
-    '''
+    """
     common_cols = set.intersection(*column_sets)
     noncommon_columns_df = [
         column_set.difference(common_cols) for column_set in column_sets
@@ -66,8 +68,8 @@ def check_column_sets(column_sets):
     logging.debug("Column sets are ok.")
 
 
-def process_multi(profile_files, exclusive = True):
-    ''' Processes ``.cubex`` files coming from different profiling runs, e.g.
+def process_multi(profile_files, exclusive=True):
+    """ Processes ``.cubex`` files coming from different profiling runs, e.g.
     from a ``scalasca -analyze`` run, aggregating the results.
    
     Assumes that there is a set of metrics which are common to all files,
@@ -99,17 +101,17 @@ def process_multi(profile_files, exclusive = True):
     conv_info : list
         A list of metrics that can be converted to inclusive.
 
-    '''
+    """
     # Assuming that the calltree info is equal for all
     # .cubex files, up to isomorphism.
     first_file_info = process_cubex(profile_files[0], exclusive)
-    call_tree = first_file_info['calltree']
-    call_tree_df = first_file_info['calltree_df']
+    call_tree = first_file_info["calltree"]
+    call_tree_df = first_file_info["calltree_df"]
 
     logging.debug(f"Reading {len(profile_files)} files...")
-    outputs = [ process_cubex(pf, exclusive) for pf in profile_files]
-    dfs = [ output['df'].set_index(['Cnode ID','Thread ID']) for output in outputs ] 
-    conv_infos = [ output['conv_info'] for output in outputs ] 
+    outputs = [process_cubex(pf, exclusive) for pf in profile_files]
+    dfs = [output["df"].set_index(["Cnode ID", "Thread ID"]) for output in outputs]
+    conv_infos = [output["conv_info"] for output in outputs]
 
     conv_info = set.union(*conv_infos)
 
@@ -124,33 +126,30 @@ def process_multi(profile_files, exclusive = True):
     dfs_common = [df.loc[:, common_cols] for df in dfs]
 
     for i, df in enumerate(dfs_common):
-        df.columns = pd.MultiIndex.from_tuples([(i, col)
-                                                 for col in common_cols],
-                                                names=['run', 'metric'])
+        df.columns = pd.MultiIndex.from_tuples(
+            [(i, col) for col in common_cols], names=["run", "metric"]
+        )
 
-    df_common = pd.concat(dfs_common, axis='columns', join='inner')
+    df_common = pd.concat(dfs_common, axis="columns", join="inner")
 
     # finding columns specific to each DFs and creating a
     # dataframe for those
 
-    noncommon_columns_df = [
-        columns.difference(common_cols) for columns in columns_df
-    ]
+    noncommon_columns_df = [columns.difference(common_cols) for columns in columns_df]
 
     dfs_noncommon = [
         df.loc[:, noncommon_columns]
         for df, noncommon_columns in zip(dfs, noncommon_columns_df)
     ]
 
-    df_noncommon = (pd.concat(dfs_noncommon, axis='columns', join='inner')
-            .rename_axis(mapper = ['metric'], axis = 'columns'))
-    
+    df_noncommon = pd.concat(dfs_noncommon, axis="columns", join="inner").rename_axis(
+        mapper=["metric"], axis="columns"
+    )
 
-    return {'tree'      : call_tree,
-            'tree_df'   : call_tree_df,
-            'common'    : df_common, 
-            'noncommon' : df_noncommon,
-            'conv_info' : conv_info}
-
-
-
+    return {
+        "tree": call_tree,
+        "tree_df": call_tree_df,
+        "common": df_common,
+        "noncommon": df_noncommon,
+        "conv_info": conv_info,
+    }

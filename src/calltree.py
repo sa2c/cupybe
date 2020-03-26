@@ -14,7 +14,7 @@ from cube_file_utils import get_lines, get_cube_dump_w_text
 # Only members that are currently used.
 CallTreeNode = namedtuple('CallTreeNode',
                           ['fname', 'cnode_id', 'parent', 'children'])
-'''A node of the call tree.
+"""A node of the call tree.
 
 .. py:attribute:: fname
   
@@ -32,14 +32,16 @@ CallTreeNode = namedtuple('CallTreeNode',
    
    A list of bindings to child nodes.
 
-'''
+"""
+
 CallTreeNode.__repr__ = lambda x: calltree_to_repr(x)
 
 # Only members that are currently used.
 CallTreeLine = namedtuple('CallTreeLine', ['fname', 'cnode_id', 'level'])
 
-def iterate_on_call_tree(root,maxlevel = None):
-    '''Iterator on a tree (Generator).
+
+def iterate_on_call_tree(root, maxlevel=None):
+    """Iterator on a tree (Generator).
     Can be used for searching in the tree, depth-first.
 
     Parameters
@@ -54,16 +56,16 @@ def iterate_on_call_tree(root,maxlevel = None):
     res : CallTreeNode
         Iterator yielding ``CallTreeNode``\s.
         
-    '''
+    """
     yield root
     new_maxlevel = maxlevel - 1 if maxlevel is not None else None
     if len(root.children) != 0 and (maxlevel is None or maxlevel > 0):
-        for child in root.children :
+        for child in root.children:
             yield from iterate_on_call_tree(child, new_maxlevel)
 
 
-def calltree_to_df(call_tree, full_path = False):
-    '''Convert a call tree into a DataFrame.
+def calltree_to_df(call_tree, full_path=False):
+    """Convert a call tree into a DataFrame.
 
     Parameters
     ----------
@@ -78,28 +80,31 @@ def calltree_to_df(call_tree, full_path = False):
         A dataframe with "Function Name", "Cnode ID", "Parent Cnode ID" and 
         optionally "Full Callpath" as columns.
 
-    '''
-    tuples = [(n.fname, n.cnode_id,
-               n.parent.cnode_id if n.parent is not None else pd.NA)
-              for n in iterate_on_call_tree(call_tree)]
+    """
 
-    df = pd.DataFrame(data=tuples,
-                      columns=['Function Name', 'Cnode ID', 'Parent Cnode ID'])
+    tuples = [
+        (n.fname, n.cnode_id, n.parent.cnode_id if n.parent is not None else pd.NA)
+        for n in iterate_on_call_tree(call_tree)
+    ]
+
+    df = pd.DataFrame(
+        data=tuples, columns=["Function Name", "Cnode ID", "Parent Cnode ID"]
+    )
 
     if full_path:
         # full callpath vs cnode id for convenience
         data = get_fpath_vs_id(call_tree)
-        fullpath_vs_id = pd.DataFrame(data, columns=['Cnode ID', 'Full Callpath'])
+        fullpath_vs_id = pd.DataFrame(data, columns=["Cnode ID", "Full Callpath"])
 
         # function name, cnode_id, parent_cnode_id
 
-        df = fullpath_vs_id.merge(right=df, how='inner', on='Cnode ID')
+        df = fullpath_vs_id.merge(right=df, how="inner", on="Cnode ID")
 
     return df
 
 
-def calltree_to_string(root, max_len=60, maxlevel = None,payload = None):
-    ''' For an understandable, ascii art representation of the call tree.
+def calltree_to_string(root, max_len=60, maxlevel=None, payload=None):
+    """ For an understandable, ascii art representation of the call tree.
     Recursive function.
 
     Parameters
@@ -117,58 +122,59 @@ def calltree_to_string(root, max_len=60, maxlevel = None,payload = None):
     -------
     res : string
         string representation of the call tree and the payload.
-    '''
-    return _calltree_to_string(root,'',max_len,maxlevel, payload)
+    """
+    return _calltree_to_string(root, "", max_len, maxlevel, payload)
 
 
-def _calltree_to_string(root, line_prefix='', max_len=60, maxlevel = None,payload = None):
+def _calltree_to_string(root, line_prefix="", max_len=60, maxlevel=None, payload=None):
     res = line_prefix + f"-{root.fname}:"
     to_print = str(root.cnode_id if payload is None else payload[root.cnode_id])
-    res += ' ' * (max_len - len(res) - len(to_print))
-    res += to_print + '\n'
+    res += " " * (max_len - len(res) - len(to_print))
+    res += to_print + "\n"
     new_maxlevel = maxlevel - 1 if maxlevel is not None else None
     if len(root.children) != 0 and (maxlevel is None or maxlevel > 0):
         for child in root.children[:-1]:
-            res += _calltree_to_string(child, line_prefix + '  |',
-                                      max_len, new_maxlevel, payload)
-        res += _calltree_to_string(root.children[-1], line_prefix + '   ',
-                                  max_len, new_maxlevel, payload) 
+            res += _calltree_to_string(
+                child, line_prefix + "  |", max_len, new_maxlevel, payload
+            )
+        res += _calltree_to_string(
+            root.children[-1], line_prefix + "   ", max_len, new_maxlevel, payload
+        )
     return res
 
 
 def calltree_to_repr(root):
-    ''' An implementation for '__repr__'. 
+    """ An implementation for '__repr__'.
 
     Prints only the beginning and the end of the call tree.
-    '''
-    lines = calltree_to_string(root).split('\n')
-    res = lines[:5] + ['...'] + lines[-6:]
+    """
+    lines = calltree_to_string(root).split("\n")
+    res = lines[:5] + ["..."] + lines[-6:]
     l = max(len(line) for line in res)
-    res = ['', '=' * l] + res + ['=' * l, '']
-    return '\n'.join(res)
+    res = ["", "=" * l] + res + ["=" * l, ""]
+    return "\n".join(res)
 
 
 def get_max_len(root):
-    '''
+    """
     For nicer printing. Not very precise.
-    '''
-    return len(root.fname) + 1 + max(
-        len(child.fname) for child in root.children)
+    """
+    return len(root.fname) + 1 + max(len(child.fname) for child in root.children)
 
 
-def get_fpath_vs_id(root, parent_full_callpath=''):
-    '''
+def get_fpath_vs_id(root, parent_full_callpath=""):
+    """
     Returns a list of (Cnode ID, full call path) tuples.
-    '''
+    """
     full_callpath = parent_full_callpath + root.fname
     data = [(root.cnode_id, full_callpath)]
     for child in root.children:
-        data += get_fpath_vs_id(child, full_callpath + '/')
+        data += get_fpath_vs_id(child, full_callpath + "/")
     return data
 
 
 def parse_line(line):
-    '''                             
+    """
     Parse a line in the call tree graph output by 'cube_dump -w'
     returning the name, the node id and the level.
 
@@ -209,20 +215,22 @@ def calltree_from_lines(call_tree_lines):
     """
 
     parsed_lines = [parse_line(line) for line in call_tree_lines]
+
     logging.debug(f"No of functions found: {len(parsed_lines)}\n")
     root = parsed_lines[0]
-    assert root.level == 0, f"First node is not root (level={root.level}), not depth first order?"
+    assert (
+        root.level == 0
+    ), f"First node is not root (level={root.level}), not depth first order?"
     res = CallTreeNode(root.fname, root.cnode_id, None, [])
     last_parent = res
 
     def add_children(node, level, remaining_lines):
+        "Recursively adds children to node"
         while len(remaining_lines) > 0 and remaining_lines[0].level > level:
             new_line = remaining_lines[0]
             remaining_lines = remaining_lines[1:]
-            new_node = CallTreeNode(new_line.fname, new_line.cnode_id, node,
-                                    [])
-            remaining_lines = add_children(new_node, new_line.level,
-                                           remaining_lines)
+            new_node = CallTreeNode(new_line.fname, new_line.cnode_id, node, [])
+            remaining_lines = add_children(new_node, new_line.level, remaining_lines)
             node.children.append(new_node)
         return remaining_lines
 
@@ -252,4 +260,3 @@ def get_call_tree(profile_file):
     calltree = calltree_from_lines(call_tree_lines)
 
     return calltree
-
