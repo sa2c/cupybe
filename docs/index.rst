@@ -54,6 +54,7 @@ Modules
    metrics
    calltree_conversions
    index_conversions
+   tree_parsing
 
 
 Indices and tables
