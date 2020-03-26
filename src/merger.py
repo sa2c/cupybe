@@ -2,9 +2,11 @@
 Utilities to merge the information that comes from multiple '.cubex' files
 """
 import calltree as ct
+from itertools import combinations
 import cube_file_utils as cfu
 import metrics as mt
 import logging
+import pandas as pd
 
 
 def process_cubex(profile_file, exclusive = True):
@@ -35,7 +37,6 @@ def process_cubex(profile_file, exclusive = True):
         in the dump.
 
     '''
-    import pandas as pd
     # Getting all callgraph information
     logging.debug(f"Reading {profile_file}...")
     call_tree = ct.get_call_tree(profile_file)
@@ -60,7 +61,6 @@ def check_column_sets(column_sets):
         column_set.difference(common_cols) for column_set in column_sets
     ]
 
-    from itertools import combinations
     for nccs1, nccs2 in combinations(noncommon_columns_df, 2):
         assert len(nccs1.intersection(nccs2)) == 0, f"{nccs1}, {nccs2}"
     logging.debug("Column sets are ok.")
@@ -100,7 +100,6 @@ def process_multi(profile_files, exclusive = True):
         A list of metrics that can be converted to inclusive.
 
     '''
-    import pandas as pd
     # Assuming that the calltree info is equal for all
     # .cubex files, up to isomorphism.
     first_file_info = process_cubex(profile_files[0], exclusive)

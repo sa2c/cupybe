@@ -5,6 +5,8 @@ e.g. ``Cnode IDs``, ``Full Callpath`` and ``Short Callpath``.
 ``Short Callpath`` means the name of the function followed by the ``Cnode ID``,
 separated by comma.
 '''
+from itertools import filterfalse
+import pandas as pd
 
 possible_index_cols = ["Short Callpath", "Full Callpath", "Cnode ID"]
 
@@ -12,7 +14,6 @@ def find_index_col(df):
     '''
     Finds the column in the index that can be transformed.
     '''
-    from itertools import filterfalse
     index_candidates = list(filterfalse( lambda x : x not in possible_index_cols, df.index.names))
     
     assert len(index_candidates) == 1, "Not clear which index to use."
@@ -48,7 +49,6 @@ def convert_index(df,tree_df, target = None):
 
     assert None not in cnames, "workaround not implemented"
     assert None not in inames, "workaround not implemented"
-    import pandas as pd 
     assert type(df) == pd.DataFrame
     assert type(tree_df) == pd.DataFrame or tree_df is None
     assert type(target) == str or target is None
@@ -72,7 +72,6 @@ def convert_index(df,tree_df, target = None):
     new_index_levels = list(inames)
     new_index_levels[inames.index(old_index_col)] = new_index_col
 
-    import pandas as pd 
     return ( pd.merge(
         df.stack(cnames).reset_index(),
         needed_tree_data,

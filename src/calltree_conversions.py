@@ -3,6 +3,10 @@ Utilities to convert metrics to inclusive.
 '''
 
 import calltree as ct
+import pandas as pd
+import pandas as pd
+import index_conversions as ic
+
 
 def convert_series_to_inclusive(series, call_tree):
     '''
@@ -26,7 +30,6 @@ def convert_series_to_inclusive(series, call_tree):
         over following the hierarchy given by the call_tree object.
 
     '''
-    import pandas as pd 
     if type(series.index) == pd.MultiIndex and len(series.index.levels) > 1:
         raise NotImplementedError("MultiIndex not supported for series")
 
@@ -42,7 +45,6 @@ def convert_series_to_inclusive(series, call_tree):
              value += aggregate(child)
         return value
 
-    import pandas as pd
     return (pd.DataFrame(
             data = [ (node.cnode_id,aggregate(node)) 
                 for node in ct.iterate_on_call_tree(call_tree) ],
@@ -77,7 +79,6 @@ def select_metrics(df, selected_metrics):
         
     '''
     # finding the level in the columns with the metrics
-    import pandas as pd
     if type(df.columns) == pd.MultiIndex:
         metric_level = df.columns.names.index('metric')
         nlevels = len(df.columns.names)
@@ -124,7 +125,6 @@ def convert_df_to_inclusive(df_convertible, call_tree, tree_df = None):
         A DataFrame
 
     '''
-    import index_conversions as ic
 
     old_index_name = ic.find_index_col(df_convertible)
 
@@ -144,7 +144,6 @@ def convert_df_to_inclusive(df_convertible, call_tree, tree_df = None):
 
     names = df_transposed.columns.names
 
-    import pandas as pd
     return (pd.concat(
                 objs = [ 
                     aggregate(n) for n in ct.iterate_on_call_tree(call_tree) 

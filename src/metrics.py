@@ -6,6 +6,7 @@ the convertibility to inclusive.
 
 """
 from collections import namedtuple
+from cube_file_utils import get_lines, get_cube_dump_w_text
 
 Metric = namedtuple('Metric', ['shortname', 'convertibility'])
 
@@ -15,7 +16,6 @@ def get_metric_lines(cube_dump_w_text):
     Select the lines relative to the metrics out of the output of 
     'cube_dump -w'.
     '''
-    from cube_file_utils import get_lines
     return get_lines(
         cube_dump_w_text,
         start_hint='METRIC DIMENSION',
@@ -56,7 +56,6 @@ def get_inclusive_convertible_metrics(profile_file):
     ``INCLUSIVE convertible``.
 
     '''
-    from cube_file_utils import get_cube_dump_w_text
     cube_dump_w_text = get_cube_dump_w_text(profile_file)
     lines = get_metric_lines(cube_dump_w_text)
     metrics  = get_metric_info(lines)

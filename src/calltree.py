@@ -7,6 +7,9 @@ named tuples (of class ``CallTreeNode``)
 """
 import logging
 from collections import namedtuple
+import pandas as pd
+import re
+from cube_file_utils import get_lines, get_cube_dump_w_text
 
 # Only members that are currently used.
 CallTreeNode = namedtuple('CallTreeNode',
@@ -76,7 +79,6 @@ def calltree_to_df(call_tree, full_path = False):
         optionally "Full Callpath" as columns.
 
     '''
-    import pandas as pd
     tuples = [(n.fname, n.cnode_id,
                n.parent.cnode_id if n.parent is not None else pd.NA)
               for n in iterate_on_call_tree(call_tree)]
@@ -175,7 +177,6 @@ def parse_line(line):
     OUTPUT:
     ('MPI_Finalize',163,2)
     '''
-    import re
     splitpoint = line.find('[')
     fun_name = re.search('(\w+)\s+$', line[:splitpoint]).groups()[0]
     cnode_id = re.search('id=([0-9]+)', line[splitpoint:]).groups()[0]
@@ -193,7 +194,6 @@ def get_call_tree_lines(cube_dump_w_text):
     Select the lines relative to the call tree out of the
     output of 'cube_dump -w'.
     '''
-    from cube_file_utils import get_lines
     return get_lines(cube_dump_w_text,start_hint = 'CALL TREE',
             end_hint = 'SYSTEM DIMENSION')
 
@@ -246,7 +246,7 @@ def get_call_tree(profile_file):
         A recursive representation of the call tree.
     """
     # "call tree" object
-    from cube_file_utils import get_cube_dump_w_text
+
     cube_dump_w_text = get_cube_dump_w_text(profile_file)
     call_tree_lines = get_call_tree_lines(cube_dump_w_text)
     calltree = calltree_from_lines(call_tree_lines)

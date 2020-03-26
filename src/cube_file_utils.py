@@ -2,6 +2,11 @@
 This module contains low-level functions that wrap/call the 
 ``cube_dump`` utility.
 '''
+import subprocess
+import logging
+import sys
+import pandas as pd
+
 
 def get_cube_dump_w_text(profile_file):
     '''Simple function that calls ``cube_dump -w`` and gets the output as a 
@@ -17,8 +22,6 @@ def get_cube_dump_w_text(profile_file):
     cube_dump_w_text : str
         Output of ``cube_dump -w``
     '''
-    import subprocess
-    import sys
     if sys.version_info >= (3,7,0):
         cube_dump_process = subprocess.run(['cube_dump', '-w', profile_file],
                                        capture_output=True,
@@ -50,7 +53,6 @@ def get_lines(cube_dump_w_text, start_hint, end_hint):
     lines : list of str
         List of the lines of interest.
     '''
-    import logging
     all_lines = cube_dump_w_text.split('\n')
     start_line_idx = next(i for i, l in enumerate(all_lines)
                           if start_hint in l)
@@ -85,8 +87,6 @@ def get_dump(profile_file, exclusive = True):
     res : pandas.DataFrame
         A DataFrame containing all the metrics in the ``.cubex`` file. 
     '''
-    import subprocess
-    import pandas as pd
     excl_incl = 'excl' if exclusive == True else 'incl'
     command = f"cube_dump -m all -x excl -z {excl_incl} -c all -s csv2 {profile_file}"
     cube_dump_process = subprocess.Popen(command.split(), stdout = subprocess.PIPE)
