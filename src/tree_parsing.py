@@ -2,15 +2,17 @@
 General utilities for parsing a list of lines into a hierarchical structure.
 '''
 
+
 def level_fun(line):
     import re
     splitpoint = re.search('\w', line).span()[0]
     return int(line[:splitpoint].count(' ') / 2)
 
-def hierarchy(lines, level_fun, 
-        read_fun = lambda x : x,
-        assemble_fun = lambda x,y : (x,y)
-        ):
+
+def hierarchy(lines,
+              level_fun,
+              read_fun=lambda line: line,
+              assemble_fun=lambda root, children: (root, children)):
     '''
     Reorders a list of lines that can be mapped to a level via ``level_fun``
     into a hierarchical structure of the kind
@@ -61,12 +63,15 @@ def hierarchy(lines, level_fun,
     ends = starts[1:] + [len(lines)]
 
     children = [
-        hierarchy(lines[s:e], level_fun, read_fun ) for s, e in zip(starts, ends) if s < e
+        hierarchy(lines[s:e], level_fun, read_fun)
+        for s, e in zip(starts, ends) if s < e
     ]
 
     return assemble_fun(root, children)
 
+
 # FOR TESTING
+
 
 def iterate(node):
     root, children = node
