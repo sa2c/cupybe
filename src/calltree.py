@@ -33,6 +33,7 @@ CallTreeNode = namedtuple('CallTreeNode',
    A list of bindings to child nodes.
 
 """
+CallTreeNode.__repr__ = calltree_to_repr
 
 CallTreeNode.__repr__ = lambda x: calltree_to_repr(x)
 
