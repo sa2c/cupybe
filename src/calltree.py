@@ -260,7 +260,8 @@ def calltree_from_lines(input_lines):
             # We obtain this as the children of the grandparent node.
             # The parent of this new node will be the grandparent
 
-            grandparent = last_node.parent.parent
+            for i in range(level - last_node.level):
+                grandparent = last_node.parent.parent
 
             siblings = grandparent.children
 
