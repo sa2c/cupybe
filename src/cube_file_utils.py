@@ -8,6 +8,10 @@ import sys
 import pandas as pd
 
 
+class CubeDumpException(Exception):
+    pass
+
+
 def get_cube_dump_w_text(profile_file):
     """Simple function that calls ``cube_dump -w`` and gets the output as a
     string.
@@ -34,6 +38,15 @@ def get_cube_dump_w_text(profile_file):
             stdout=subprocess.PIPE,
             universal_newlines=True,
         )
+
+    if cube_dump_process.returncode:
+        raise CubeDumpException(
+            f"Cube dump run failed with error code \
+            {int(cube_dump_process.returncode)}.\n\
+            Is {profile_file} a valid profile file? \
+            {cube_dump_process.stderr}"
+        )
+
     return cube_dump_process.stdout
 
 
