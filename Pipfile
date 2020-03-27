@@ -15,4 +15,4 @@ sphinx-rtd-theme = "*"
 # Python >=3.6
 python-box = "*"
 plotly = "*"
-
+dash = "*"
