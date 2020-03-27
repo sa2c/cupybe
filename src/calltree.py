@@ -7,33 +7,47 @@ named tuples (of class ``CallTreeNode``)
 """
 import logging
 from collections import namedtuple
+from box import Box
 import pandas as pd
 import re
 from cube_file_utils import get_lines, get_cube_dump_w_text
 
-# Only members that are currently used.
-CallTreeNode = namedtuple(
-    "CallTreeNode", ["fname", "cnode_id", "parent", "children", "level", "attrs"]
-)
-"""A node of the call tree.
 
-.. py:attribute:: fname
-  
-   The name of the function;
+class CubeTreeNode(Box):
+    """
+    Holds attributes of a tree node read from cube commands such as cube dump.
 
-.. py:attribute:: cnode_id
-   
-   The unique ID related to the node in the call tree;
+    For a node of the cube call tree, the following attributes are available:
 
-.. py:attribute:: parent
-   
-   A binding to the parent node (can be ``None``);
+    .. py:attribute:: fname
 
-.. py:attribute:: children
-   
-   A list of bindings to child nodes.
+       The name of the function;
 
-"""
+    .. py:attribute:: cnode_id
+
+       The unique ID related to the node in the call tree, read from id=value in string;
+
+    .. py:attribute:: parent
+
+       A binding to the parent node (can be ``None``);
+
+    .. py:attribute:: children
+
+       A list of bindings to child nodes.
+
+    And others from cube_dump output.
+    """
+
+    def __repr__(root):
+        """ An implementation for '__repr__'.
+
+        Prints only the beginning and the end of the call tree.
+        """
+        lines = calltree_to_string(root).split("\n")
+        res = lines[:5] + ["..."] + lines[-6:]
+        l = max(len(line) for line in res)
+        res = ["", "=" * l] + res + ["=" * l, ""]
+        return "\n".join(res)
 
 
 def iterate_on_call_tree(root, maxlevel=None):
@@ -139,21 +153,6 @@ def _calltree_to_string(root, line_prefix="", max_len=60, maxlevel=None, payload
     return res
 
 
-def calltree_to_repr(root):
-    """ An implementation for '__repr__'.
-
-    Prints only the beginning and the end of the call tree.
-    """
-    lines = calltree_to_string(root).split("\n")
-    res = lines[:5] + ["..."] + lines[-6:]
-    l = max(len(line) for line in res)
-    res = ["", "=" * l] + res + ["=" * l, ""]
-    return "\n".join(res)
-
-
-CallTreeNode.__repr__ = calltree_to_repr
-
-
 def get_max_len(root):
     """
     For nicer printing. Not very precise.
@@ -175,12 +174,12 @@ def get_fpath_vs_id(root, parent_full_callpath=""):
 def create_node(line, parent, level):
     """
     Parse a line in the call tree graph output by 'cube_dump -w'
-    returning the name, the node id and the level.
+    returning any attributes found, as well as attributes `parent` and `level`.
 
     INPUT:
     '    |-MPI_Finalize  [ ( id=163,   mod=), -1, -1, paradigm=mpi, role=function, url=, descr=, mode=MPI]'
     OUTPUT:
-    ('MPI_Finalize',163,2)
+    CubeTreeNode with the attributes read from key=value pairs in input string. In this case: id=163, mod='', paradigm='mpi' etc
     """
 
     splitpoint = line.find("[")
@@ -196,17 +195,21 @@ def create_node(line, parent, level):
         lambda x: len(x) == 2, [entry.split("=") for entry in info.split(",")]
     )
 
-    # strip whitespace
+    # extract attributes from entry pairs
     attrs = {key.strip(): value.strip() for key, value in entry_pairs}
 
-    return CallTreeNode(
-        fname=fun_name,
-        cnode_id=int(attrs["id"]),
-        parent=parent,
-        children=[],
-        level=level,
-        attrs=attrs,
-    )
+    attrs = CubeTreeNode(attrs)
+
+    # set parent and level
+    attrs.parent = parent
+    attrs.level = level
+
+    # rename id attr to cnode_id, if it exists
+    if "id" in attrs:
+        attrs.cnode_id = attrs["id"]
+        del attrs["id"]
+
+    return attrs
 
 
 def get_call_tree_lines(cube_dump_w_text):
