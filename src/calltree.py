@@ -6,7 +6,7 @@ A call tree is represented as a tree of
 named tuples (of class ``CallTreeNode``)
 """
 import logging
-from collections import namedtuple
+from tree_parsing import collect_hierarchy
 from box import Box
 import pandas as pd
 import re
@@ -56,14 +56,14 @@ def iterate_on_call_tree(root, maxlevel=None):
 
     Parameters
     ----------
-    root: CallTreeNode
-        a CallTreeNode representing the root of the tree;
+    root: CubeTreeNode
+        a CubeTreeNode representing the root of the tree;
     maxlevel : int or None
         the maximum depth of the recursion (``None`` means unlimited).
 
     Returns
     -------
-    res : CallTreeNode
+    res : CubeTreeNode
         Iterator yielding ``CallTreeNode``\s.
         
     """
@@ -171,7 +171,7 @@ def get_fpath_vs_id(root, parent_full_callpath=""):
     return data
 
 
-def create_node(line, parent, level):
+def create_node(line):
     """
     Parse a line in the call tree graph output by 'cube_dump -w'
     returning any attributes found, as well as attributes `parent` and `level`.
@@ -198,14 +198,16 @@ def create_node(line, parent, level):
 
     attrs = CubeTreeNode(attrs)
 
-    # set parent and level
-    attrs.parent = parent
-    attrs.level = level
+    # set fname as function name
+    attrs.fname = re.search("(\w+)\s+\[", line).groups()[0]
 
     # rename id attr to cnode_id, if it exists
     if "id" in attrs:
         attrs.cnode_id = attrs["id"]
         del attrs["id"]
+
+    # Ensure that each node has a parent attribute (None by default)
+    attrs.parent = None
 
     return attrs
 
@@ -220,57 +222,31 @@ def get_call_tree_lines(cube_dump_w_text):
     )
 
 
+def get_level(line):
+    return line.count("|")
+
+
 def calltree_from_lines(input_lines):
     """
     Build the call tree structure from the output
     """
 
     # list of non-zero length lines
-    lines = list(filter(lambda x: len(x) > 0, input_lines))
+    def assemble_function(root, children):
+        root.children = children
 
-    root_node = create_node(lines.pop(0), parent=None, level=0)
+        if children is None:
+            print("None Children")
 
-    # last_node tracks the last node created
-    last_node = root_node
+        for child in children:
+            if child is not None:
+                child.parent = root
+            else:
+                print("None Child")
 
-    for line in lines[1:]:
-        siblings = []
+        return root
 
-        level = line.count("|")
-
-        if level == last_node.level:
-            # ----- Sibling to last node -----
-            # In this case, create a node and add it to the siblings list.
-            # The parent of the last node is the parent of this node.
-
-            last_node = create_node(line, last_node.parent, level=level)
-
-        elif level > last_node.level:
-            # ----- Child to last node -----
-            # We've moved down to a child level, with the last node as a parent
-            # so we need to change the `siblings` list to point to the children
-            # of the last node, and pass the last node as parent to create_node
-
-            siblings = last_node.children
-
-            last_node = create_node(line, parent=last_node, level=level)
-        else:
-            # ----- Parent to last node -----
-            # Since we're moving up a level compared to the previous node,
-            # so `siblings` should refer to siblings of the parent.
-            # We obtain this as the children of the grandparent node.
-            # The parent of this new node will be the grandparent
-
-            for i in range(level - last_node.level):
-                grandparent = last_node.parent.parent
-
-            siblings = grandparent.children
-
-            last_node = create_node(line, parent=grandparent, level=level)
-
-        siblings.append(last_node)
-
-    return root_node
+    return collect_hierarchy(input_lines, get_level, create_node, assemble_function)
 
 
 def get_call_tree(profile_file):
