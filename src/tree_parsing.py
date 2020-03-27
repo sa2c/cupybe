@@ -57,8 +57,9 @@ def collect_hierarchy(
 
     """
 
-    root = read_fun(lines[0])  # There always is at least an element
-    level = level_fun(root) + 1
+    root_line = lines[0]
+    root = read_fun(root_line)  # There always is at least an element
+    level = level_fun(root_line) + 1
 
     # Starts of all the groups
     starts = [i for i, line in enumerate(lines) if level_fun(line) == level]
@@ -66,7 +67,7 @@ def collect_hierarchy(
     ends = starts[1:] + [len(lines)]
 
     children = [
-        collect_hierarchy(lines[s:e], level_fun, read_fun)
+        collect_hierarchy(lines[s:e], level_fun, read_fun, assemble_fun)
         for s, e in zip(starts, ends)
         if s < e
     ]
