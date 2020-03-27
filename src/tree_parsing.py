@@ -1,13 +1,13 @@
-'''
+"""
 General utilities for parsing a list of lines into a hierarchical structure.
-'''
+"""
 
 
 def level_fun(line):
     import re
-    splitpoint = re.search('\w', line).span()[0]
-    return int(line[:splitpoint].count(' ') / 2)
 
+    splitpoint = re.search("\w", line).span()[0]
+    return int(line[:splitpoint].count(" ") / 2)
 
 
 def collect_hierarchy(
@@ -55,7 +55,7 @@ def collect_hierarchy(
     assembled : AssembledObject
         The result
 
-    '''
+    """
 
     root = read_fun(lines[0])  # There always is at least an element
     level = level_fun(root) + 1
