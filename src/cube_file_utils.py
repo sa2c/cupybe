@@ -1,10 +1,19 @@
-'''
-This module contains low-level functions that wrap/call the 
+"""
+This module contains low-level functions that wrap/call the
 ``cube_dump`` utility.
-'''
+"""
+import subprocess
+import logging
+import sys
+import pandas as pd
+
+
+class CubeDumpException(Exception):
+    pass
+
 
 def get_cube_dump_w_text(profile_file):
-    '''Simple function that calls ``cube_dump -w`` and gets the output as a 
+    """Simple function that calls ``cube_dump -w`` and gets the output as a
     string.
 
     Parameters
@@ -16,24 +25,33 @@ def get_cube_dump_w_text(profile_file):
     =======
     cube_dump_w_text : str
         Output of ``cube_dump -w``
-    '''
-    import subprocess
-    import sys
-    if sys.version_info >= (3,7,0):
-        cube_dump_process = subprocess.run(['cube_dump', '-w', profile_file],
-                                       capture_output=True,
-                                       text=True)
+    """
 
+    if sys.version_info >= (3, 7, 0):
+        cube_dump_process = subprocess.run(
+            ["cube_dump", "-w", profile_file], capture_output=True, text=True
+        )
 
-    if sys.version_info < (3,7,0):
-        cube_dump_process = subprocess.run(['cube_dump', '-w', profile_file],
-                                       stdout = subprocess.PIPE,
-                                       universal_newlines=True)
- 
+    if sys.version_info < (3, 7, 0):
+        cube_dump_process = subprocess.run(
+            ["cube_dump", "-w", profile_file],
+            stdout=subprocess.PIPE,
+            universal_newlines=True,
+        )
+
+    if cube_dump_process.returncode:
+        raise CubeDumpException(
+            f"Cube dump run failed with error code \
+            {int(cube_dump_process.returncode)}.\n\
+            Is {profile_file} a valid profile file? \
+            {cube_dump_process.stderr}"
+        )
+
     return cube_dump_process.stdout
 
+
 def get_lines(cube_dump_w_text, start_hint, end_hint):
-    '''
+    """
     Select a section of the output of 'cube_dump -w'.
 
     Parameters
@@ -48,23 +66,21 @@ def get_lines(cube_dump_w_text, start_hint, end_hint):
     Returns
     =======
     lines : list of str
-        List of the lines of interest.
-    '''
-    import logging
-    all_lines = cube_dump_w_text.split('\n')
-    start_line_idx = next(i for i, l in enumerate(all_lines)
-                          if start_hint in l)
-    stop_line_idx = next(i for i, l in enumerate(all_lines)
-                                   if end_hint in l)
+        List of all non-empty lines between start_hint and end_hint.
+    """
+
+    all_lines = cube_dump_w_text.split("\n")
+    start_line_idx = next(i for i, l in enumerate(all_lines) if start_hint in l)
+    stop_line_idx = next(i for i, l in enumerate(all_lines) if end_hint in l)
     lines = [
-        l for l in all_lines[start_line_idx + 1:stop_line_idx]
-        if len(l.strip()) != 0
+        l for l in all_lines[start_line_idx + 1 : stop_line_idx] if len(l.strip()) != 0
     ]
     logging.debug(f"No of lines: {len(lines)}\n")
     return lines
 
-def get_dump(profile_file, exclusive = True):
-    ''' Parses output of ``cube_dump`` on a ``.cubex`` file and returns a 
+
+def get_dump(profile_file, exclusive=True):
+    """ Parses output of ``cube_dump`` on a ``.cubex`` file and returns a
     dataframe.
 
     Thin wrapper around ``pandas.read_csv``, to obtain pandas dataframes 
@@ -84,11 +100,8 @@ def get_dump(profile_file, exclusive = True):
     =======
     res : pandas.DataFrame
         A DataFrame containing all the metrics in the ``.cubex`` file. 
-    '''
-    import subprocess
-    import pandas as pd
-    excl_incl = 'excl' if exclusive == True else 'incl'
+    """
+    excl_incl = "excl" if exclusive == True else "incl"
     command = f"cube_dump -m all -x excl -z {excl_incl} -c all -s csv2 {profile_file}"
-    cube_dump_process = subprocess.Popen(command.split(), stdout = subprocess.PIPE)
-    return pd.read_csv(cube_dump_process.stdout,sep = '\s*,\s*', engine = 'python')
-
+    cube_dump_process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+    return pd.read_csv(cube_dump_process.stdout, sep="\s*,\s*", engine="python")

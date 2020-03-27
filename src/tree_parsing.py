@@ -1,19 +1,22 @@
-'''
+"""
 General utilities for parsing a list of lines into a hierarchical structure.
-'''
+"""
 
 
 def level_fun(line):
     import re
-    splitpoint = re.search('\w', line).span()[0]
-    return int(line[:splitpoint].count(' ') / 2)
+
+    splitpoint = re.search("\w", line).span()[0]
+    return int(line[:splitpoint].count(" ") / 2)
 
 
-def hierarchy(lines,
-              level_fun,
-              read_fun=lambda line: line,
-              assemble_fun=lambda root, children: (root, children)):
-    '''
+def collect_hierarchy(
+    lines,
+    level_fun,
+    read_fun=lambda line: line,
+    assemble_fun=lambda root, children: (root, children),
+):
+    """
     Reorders a list of lines that can be mapped to a level via ``level_fun``
     into a hierarchical structure of the kind
 
@@ -52,10 +55,11 @@ def hierarchy(lines,
     assembled : AssembledObject
         The result
 
-    '''
+    """
 
-    root = read_fun(lines[0])  # There always is at least an element
-    level = level_fun(root) + 1
+    root_line = lines[0]
+    root = read_fun(root_line)  # There always is at least an element
+    level = level_fun(root_line) + 1
 
     # Starts of all the groups
     starts = [i for i, line in enumerate(lines) if level_fun(line) == level]
@@ -63,8 +67,9 @@ def hierarchy(lines,
     ends = starts[1:] + [len(lines)]
 
     children = [
-        hierarchy(lines[s:e], level_fun, read_fun)
-        for s, e in zip(starts, ends) if s < e
+        collect_hierarchy(lines[s:e], level_fun, read_fun, assemble_fun)
+        for s, e in zip(starts, ends)
+        if s < e
     ]
 
     return assemble_fun(root, children)
