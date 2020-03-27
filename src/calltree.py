@@ -6,7 +6,7 @@ A call tree is represented as a tree of
 named tuples (of class ``CallTreeNode``)
 """
 import logging
-from tree_parsing import collect_hierarchy
+from tree_parsing import collect_hierarchy,level_fun
 from box import Box
 import pandas as pd
 import re
@@ -222,10 +222,6 @@ def get_call_tree_lines(cube_dump_w_text):
     )
 
 
-def get_level(line):
-    return line.count("|")
-
-
 def calltree_from_lines(input_lines):
     """
     Build the call tree structure from the output
@@ -246,7 +242,7 @@ def calltree_from_lines(input_lines):
 
         return root
 
-    return collect_hierarchy(input_lines, get_level, create_node, assemble_function)
+    return collect_hierarchy(input_lines, level_fun, create_node, assemble_function)
 
 
 def get_call_tree(profile_file):
