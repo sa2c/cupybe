@@ -1,4 +1,4 @@
 example1.py.output
 example2.py.output
-sunburst.html
-treemap.html
+sunburst*.html
+treemap*.html

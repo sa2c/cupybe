@@ -58,10 +58,13 @@ import plotly.express as px
 fig = px.sunburst( data,  #
                    names=data['Short Callpath'],  #
                    parents=data['Parent'],  #
-                   values=data['Time (Inclusive)'])  #
+                   values=data['Time (Inclusive)'],  #
+                   branchvalues = 'total')
+
+
 
 # Shows in a browser. 
 fig.show() # it can be exported to .png or .jpeg from the browser view
-fig.write_html('sunburst.html') # a huge html file is produced
+fig.write_html('sunburst1.html') # a huge html file is produced
 
 

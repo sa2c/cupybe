@@ -55,7 +55,7 @@ data = ( pd.concat([times_mean,times_imbalance,parent_child],#
                  'Short Callpath-Parent':'Parent'},      #
              axis = 'columns')                           #
          .pipe(filter_small_time,                        #
-               rel_threshold=0.01))                      #
+               rel_threshold=0.00))                      #
 
 # PLOTLY 
 import plotly.express as px
@@ -65,21 +65,23 @@ sunburst = px.sunburst( data,  #
                    names = data['Short Callpath'],  #
                    parents = data['Parent'],  #
                    values = data['Time (Inclusive)'],
-                   color = data['Time Imbalance'])  #
+                   color = data['Time Imbalance'],  #
+                   branchvalues = "total") #
 
 # Shows in a browser. 
 sunburst.show() # it can be exported to .png or .jpeg from the browser view
-sunburst.write_html('sunburst.html') # a huge html file is produced
+sunburst.write_html('sunburst2.html') # a huge html file is produced
 
 # treemap
 treemap = px.treemap( data,  #
                    names = data['Short Callpath'],  #
                    parents = data['Parent'],  #
                    values = data['Time (Inclusive)'],
-                   color = data['Time Imbalance'])  #
+                   color = data['Time Imbalance'],  #
+                   branchvalues = "total") #
 
 # Shows in a browser. 
 treemap.show() # it can be exported to .png or .jpeg from the browser view
-treemap.write_html('treemap.html') # a huge html file is produced
+treemap.write_html('treemap2.html') # a huge html file is produced
 
 
