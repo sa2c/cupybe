@@ -49,6 +49,11 @@ class CubeTreeNode(Box):
         res = ["", "=" * l] + res + ["=" * l, ""]
         return "\n".join(res)
 
+    def __init__(self,*args,**kwargs):
+        if 'frozen_box' in kwargs:
+            del kwargs['frozen_box']
+        super().__init__(*args, frozen_box = True, **kwargs)
+
 
 def iterate_on_call_tree(root, maxlevel=None):
     """Iterator on a tree (Generator).
@@ -196,20 +201,18 @@ def create_node(line):
     # extract attributes from entry pairs
     attrs = {key.strip(): value.strip() for key, value in entry_pairs}
 
-    attrs = CubeTreeNode(attrs)
-
     # set fname as function name
-    attrs.fname = re.search("(\w+)\s+\[", line).groups()[0]
+    attrs['fname'] = re.search("(\w+)\s+\[", line).groups()[0]
 
     # rename id attr to cnode_id, if it exists
     if "id" in attrs:
-        attrs.cnode_id = attrs["id"]
+        attrs['cnode_id'] = int(attrs["id"])
         del attrs["id"]
 
     # Ensure that each node has a parent attribute (None by default)
-    attrs.parent = None
+    attrs['parent'] = None
 
-    return attrs
+    return CubeTreeNode(attrs)
 
 
 def get_call_tree_lines(cube_dump_w_text):
@@ -229,18 +232,17 @@ def calltree_from_lines(input_lines):
 
     # list of non-zero length lines
     def assemble_function(root, children):
-        root.children = children
 
-        if children is None:
-            print("None Children")
+        def deorphan_and_freeze(child):
+            res = dict(child)
+            res['parent'] = root
+            return CubeTreeNode(res)
 
-        for child in children:
-            if child is not None:
-                child.parent = root
-            else:
-                print("None Child")
+        children = [ deorphan_and_freeze(child) for child in children ]
+        root = dict(root) 
+        root['children'] = children
 
-        return root
+        return CubeTreeNode(root)
 
     return collect_hierarchy(input_lines, level_fun, create_node, assemble_function)
 
