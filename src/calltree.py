@@ -182,12 +182,10 @@ def create_node(line, parent, level):
     CubeTreeNode with the attributes read from key=value pairs in input string. In this case: id=163, mod='', paradigm='mpi' etc
     """
 
-    splitpoint = line.find("[")
-    fun_name = re.search("(\w+)\s+$", line[:splitpoint]).groups()[0]
-
-    # find the info string between square brackets
+    # Find the info string between square brackets
     info = re.search("\[(.*)]", line).groups()[0]
-    # remove brackets around id/mod
+
+    # delete brackets
     info = re.sub("\(|\)", "", info).strip()
 
     # split entries into lists of key/value pairs
