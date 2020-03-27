@@ -3,10 +3,10 @@ Utilities to get a call tree (from the output of ``cube_dump -w``).
 
 A call tree is represented as a tree of 
 ``(function_name,cnode_id,parent,[list of children])``
-named tuples (of class ``CallTreeNode``)
+named tuples (of class ``CubeTreeNode``)
 """
 import logging
-from tree_parsing import collect_hierarchy
+from tree_parsing import collect_hierarchy,level_fun
 from box import Box
 import pandas as pd
 import re
@@ -49,6 +49,11 @@ class CubeTreeNode(Box):
         res = ["", "=" * l] + res + ["=" * l, ""]
         return "\n".join(res)
 
+    def __init__(self,*args,**kwargs):
+        if 'frozen_box' in kwargs:
+            del kwargs['frozen_box']
+        super().__init__(*args, frozen_box = True, **kwargs)
+
 
 def iterate_on_call_tree(root, maxlevel=None):
     """Iterator on a tree (Generator).
@@ -64,7 +69,7 @@ def iterate_on_call_tree(root, maxlevel=None):
     Returns
     -------
     res : CubeTreeNode
-        Iterator yielding ``CallTreeNode``\s.
+        Iterator yielding ``CubeTreeNode``\s.
         
     """
     yield root
@@ -79,7 +84,7 @@ def calltree_to_df(call_tree, full_path=False):
 
     Parameters
     ----------
-    call_tree : CallTreeNode
+    call_tree : CubeTreeNode
         Recursive representation of a call tree
     full_path : bool
         Whether or not the full path needs to be in the output as a column
@@ -119,7 +124,7 @@ def calltree_to_string(root, max_len=60, maxlevel=None, payload=None):
 
     Parameters
     ----------
-    root : CallTreeNode
+    root : CubeTreeNode
         The root of the tree;
     max_len : int
         Desired length of the printed line;
@@ -196,20 +201,18 @@ def create_node(line):
     # extract attributes from entry pairs
     attrs = {key.strip(): value.strip() for key, value in entry_pairs}
 
-    attrs = CubeTreeNode(attrs)
-
     # set fname as function name
-    attrs.fname = re.search("(\w+)\s+\[", line).groups()[0]
+    attrs['fname'] = re.search("(\w+)\s+\[", line).groups()[0]
 
     # rename id attr to cnode_id, if it exists
     if "id" in attrs:
-        attrs.cnode_id = attrs["id"]
+        attrs['cnode_id'] = int(attrs["id"])
         del attrs["id"]
 
     # Ensure that each node has a parent attribute (None by default)
-    attrs.parent = None
+    attrs['parent'] = None
 
-    return attrs
+    return CubeTreeNode(attrs)
 
 
 def get_call_tree_lines(cube_dump_w_text):
@@ -222,10 +225,6 @@ def get_call_tree_lines(cube_dump_w_text):
     )
 
 
-def get_level(line):
-    return line.count("|")
-
-
 def calltree_from_lines(input_lines):
     """
     Build the call tree structure from the output
@@ -233,20 +232,19 @@ def calltree_from_lines(input_lines):
 
     # list of non-zero length lines
     def assemble_function(root, children):
-        root.children = children
 
-        if children is None:
-            print("None Children")
+        def deorphan_and_freeze(child):
+            res = dict(child)
+            res['parent'] = root
+            return CubeTreeNode(res)
 
-        for child in children:
-            if child is not None:
-                child.parent = root
-            else:
-                print("None Child")
+        children = [ deorphan_and_freeze(child) for child in children ]
+        root = dict(root) 
+        root['children'] = children
 
-        return root
+        return CubeTreeNode(root)
 
-    return collect_hierarchy(input_lines, get_level, create_node, assemble_function)
+    return collect_hierarchy(input_lines, level_fun, create_node, assemble_function)
 
 
 def get_call_tree(profile_file):
@@ -260,7 +258,7 @@ def get_call_tree(profile_file):
 
     Returns
     =======
-    calltree : CallTreeNode
+    calltree : CubeTreeNode
         A recursive representation of the call tree.
     """
     # "call tree" object

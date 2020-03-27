@@ -4,4 +4,4 @@
 .. automodule:: tree_parsing
 
 .. currentmodule:: tree_parsing
-.. autofunction:: hierarchy
+.. autofunction:: collect_hierarchy

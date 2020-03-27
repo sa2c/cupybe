@@ -6,5 +6,5 @@ import tree_parsing as tp
 
 lines = ct.get_call_tree_lines(cfu.get_cube_dump_w_text(argv[1]))
 
-assert list(tp.iterate(tp.hierarchy(lines, tp.level_fun))) == lines
+assert list(tp.iterate(tp.collect_hierarchy(lines, tp.level_fun))) == lines
 print("All ok")

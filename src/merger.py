@@ -11,7 +11,7 @@ from box import Box
 
 
 def process_cubex(profile_file, exclusive=True):
-    '''
+    """
     Processes a single ``.cubex`` file, returning the numeric data from the 
     profiling, plus information about the call tree and the metrics.
 
@@ -27,7 +27,7 @@ def process_cubex(profile_file, exclusive=True):
 
     Returns
     -------
-    ctree : calltree.CallTreeNode
+    calltree : calltree.CubeTreeNode
         A call tree recursive object
     ctree_df : pandas.DataFrame
         A DataFrame representation of the call tree object
@@ -94,7 +94,7 @@ def process_multi(profile_files, exclusive=True):
 
     Returns
     -------
-    ctree : calltree.CallTreeNode
+    tree : calltree.CubeTreeNode
         A call tree recursive structure;
     ctree_df : pandas.DataFrame
         DataFrame representation of the call tree;
