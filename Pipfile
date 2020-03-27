@@ -6,7 +6,13 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
+pipenv = "*"
+pandas = ">1.0"
+yapf = "*"
+sphinx = "*"
+numpydoc = "*"
+sphinx-rtd-theme = "*"
+# Python >=3.6
 python-box = "*"
+plotly = "*"
 
-[requires]
-python_version = "3.7"
