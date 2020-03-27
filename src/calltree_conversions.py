@@ -11,7 +11,7 @@ import index_conversions as ic
 def convert_series_to_inclusive(series, call_tree):
     '''
     Converts a series having Cnode IDs as index from exclusive to inclusive.
-    Takes as input a CallTreeNode object (hopefully the root).
+    Takes as input a CubeTreeNode object (hopefully the root).
 
     *Notice: The results may be nonsensical unless the metric acted upon is 
     "INCLUSIVE convertible"*
@@ -20,7 +20,7 @@ def convert_series_to_inclusive(series, call_tree):
     ----------
     series : Series
         A series representing exclusive measurements
-    call_tree : CallTreeNode
+    call_tree : CubeTreeNode
         A recursive representation of the call tree.
 
     Returns
@@ -115,7 +115,7 @@ def convert_df_to_inclusive(df_convertible, call_tree, tree_df=None):
     df_convertible : pandas.DataFrame
         A DataFrame containing only metrics that can be converted safely from
         exclusive to inclusive.
-    call_tree: CallTreeNode
+    call_tree: CubeTreeNode
         A recursive representation of the call tree.
     tree_df : pandas.DataFrame or None
         In case ``df_convertible`` is not indexed by ``Cnode ID``, a dataframe

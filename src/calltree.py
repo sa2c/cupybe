@@ -3,7 +3,7 @@ Utilities to get a call tree (from the output of ``cube_dump -w``).
 
 A call tree is represented as a tree of 
 ``(function_name,cnode_id,parent,[list of children])``
-named tuples (of class ``CallTreeNode``)
+named tuples (of class ``CubeTreeNode``)
 """
 import logging
 from tree_parsing import collect_hierarchy,level_fun
@@ -69,7 +69,7 @@ def iterate_on_call_tree(root, maxlevel=None):
     Returns
     -------
     res : CubeTreeNode
-        Iterator yielding ``CallTreeNode``\s.
+        Iterator yielding ``CubeTreeNode``\s.
         
     """
     yield root
@@ -84,7 +84,7 @@ def calltree_to_df(call_tree, full_path=False):
 
     Parameters
     ----------
-    call_tree : CallTreeNode
+    call_tree : CubeTreeNode
         Recursive representation of a call tree
     full_path : bool
         Whether or not the full path needs to be in the output as a column
@@ -124,7 +124,7 @@ def calltree_to_string(root, max_len=60, maxlevel=None, payload=None):
 
     Parameters
     ----------
-    root : CallTreeNode
+    root : CubeTreeNode
         The root of the tree;
     max_len : int
         Desired length of the printed line;
@@ -258,7 +258,7 @@ def get_call_tree(profile_file):
 
     Returns
     =======
-    calltree : CallTreeNode
+    calltree : CubeTreeNode
         A recursive representation of the call tree.
     """
     # "call tree" object

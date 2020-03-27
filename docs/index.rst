@@ -26,7 +26,7 @@ The two most important functions to use are possibly
 :ref:`process_multi <process-multi>`, which are used to parse a single (or many)
 ``.cubex`` files at once, yielding data that is mostly stored into 
 ``pandas.DataFrame``\s. In addition to that, the calltree is also stored 
-in a recursive fashion using :ref:`CallTreeNode <call-tree-node>` objects. 
+in a recursive fashion using :ref:`CubeTreeNode <cube-tree-node>` objects. 
 
 Notes
 +++++
