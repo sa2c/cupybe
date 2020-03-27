@@ -28,7 +28,7 @@ dump_excl = get_df(exclusive = True)
 
 dump_incl = get_df(exclusive = False)
 
-calltree = ct.get_call_tree('profile.cubex')
+calltree = ct.get_call_tree(input_file)
 
 # dataframe conversion
 

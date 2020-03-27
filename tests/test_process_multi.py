@@ -13,16 +13,16 @@ logger.setLevel(logging.DEBUG)
 print("Processing single dump")
 res = mg.process_cubex(files[0])
 print("Calltree:")
-print(res['calltree'])
+print(res.ctree)
 print("Metrics:")
-print(res['df'])
+print(res.df)
 
 print("Processing multiple dump")
 
 output  = mg.process_multi(files)
 print("Common metrics to all the profile files:")
-print(output['common'])
+print(output.common)
 print("Metrics specific to single profile files:")
-print(output['noncommon'])
+print(output.noncommon)
 
 

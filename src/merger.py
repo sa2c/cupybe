@@ -5,9 +5,10 @@ import calltree as ct
 import cube_file_utils as cfu
 import metrics as mt
 import logging
+from box import Box
 
 
-def process_cubex(profile_file, exclusive = True):
+def process_cubex(profile_file, exclusive=True):
     '''
     Processes a single ``.cubex`` file, returning the numeric data from the 
     profiling, plus information about the call tree and the metrics.
@@ -24,9 +25,9 @@ def process_cubex(profile_file, exclusive = True):
 
     Returns
     -------
-    calltree : calltree.CallTreeNode
+    ctree : calltree.CallTreeNode
         A call tree recursive object
-    calltree_df : pandas.DataFrame
+    ctree_df : pandas.DataFrame
         A DataFrame representation of the call tree object
     df : pandas.DataFrame
         A dataframe containing the profiling data, from 
@@ -38,16 +39,21 @@ def process_cubex(profile_file, exclusive = True):
     import pandas as pd
     # Getting all callgraph information
     logging.debug(f"Reading {profile_file}...")
-    call_tree = ct.get_call_tree(profile_file)
-    call_tree_df = ct.calltree_to_df(call_tree,full_path = True)
-    dump_df = cfu.get_dump(profile_file, exclusive)
+    ctree = ct.get_call_tree(profile_file)
+    ctree_df = ct.calltree_to_df(ctree, full_path=True)
+    dump_df = (
+        cfu.get_dump(profile_file, exclusive)  #
+        .rename_axis('metric', axis='columns')  #
+        .set_index(['Cnode ID', 'Thread ID']))  #
 
     conv_info = mt.get_inclusive_convertible_metrics(profile_file)
 
-    return {'calltree': call_tree, 
-            'calltree_df': call_tree_df, 
-            'df': dump_df,
-            'conv_info': conv_info}
+    return Box({
+        'ctree': ctree,
+        'ctree_df': ctree_df,
+        'df': dump_df,
+        'conv_info': conv_info
+    })
 
 
 def check_column_sets(column_sets):
@@ -66,7 +72,7 @@ def check_column_sets(column_sets):
     logging.debug("Column sets are ok.")
 
 
-def process_multi(profile_files, exclusive = True):
+def process_multi(profile_files, exclusive=True):
     ''' Processes ``.cubex`` files coming from different profiling runs, e.g.
     from a ``scalasca -analyze`` run, aggregating the results.
    
@@ -86,9 +92,9 @@ def process_multi(profile_files, exclusive = True):
 
     Returns
     -------
-    tree : calltree.CallTreeNode
+    ctree : calltree.CallTreeNode
         A call tree recursive structure;
-    tree_df : pandas.DataFrame
+    ctree_df : pandas.DataFrame
         DataFrame representation of the call tree;
     common : pandas.DataFrame
         A data frame containing all the data relative to metrics that are 
@@ -104,17 +110,17 @@ def process_multi(profile_files, exclusive = True):
     # Assuming that the calltree info is equal for all
     # .cubex files, up to isomorphism.
     first_file_info = process_cubex(profile_files[0], exclusive)
-    call_tree = first_file_info['calltree']
-    call_tree_df = first_file_info['calltree_df']
+    ctree = first_file_info.ctree
+    ctree_df = first_file_info.ctree_df
 
     logging.debug(f"Reading {len(profile_files)} files...")
-    outputs = [ process_cubex(pf, exclusive) for pf in profile_files]
-    dfs = [ output['df'].set_index(['Cnode ID','Thread ID']) for output in outputs ] 
-    conv_infos = [ output['conv_info'] for output in outputs ] 
+    outputs = [process_cubex(pf, exclusive) for pf in profile_files]
+    dfs = [ output.df for output in outputs ]
+    conv_infos = [output.conv_info for output in outputs]
 
     conv_info = set.union(*conv_infos)
 
-    # finding columns common to all DFs and creating
+    # finding columns COMMON to all DFs and creating
     # a dataframe for those
     columns_df = [set(df.columns) for df in dfs]
 
@@ -126,12 +132,12 @@ def process_multi(profile_files, exclusive = True):
 
     for i, df in enumerate(dfs_common):
         df.columns = pd.MultiIndex.from_tuples([(i, col)
-                                                 for col in common_cols],
-                                                names=['run', 'metric'])
+                                                for col in common_cols],
+                                               names=['run', 'metric'])
 
     df_common = pd.concat(dfs_common, axis='columns', join='inner')
 
-    # finding columns specific to each DFs and creating a
+    # finding columns SPECIFIC to each DFs and creating a
     # dataframe for those
 
     noncommon_columns_df = [
@@ -143,15 +149,14 @@ def process_multi(profile_files, exclusive = True):
         for df, noncommon_columns in zip(dfs, noncommon_columns_df)
     ]
 
-    df_noncommon = (pd.concat(dfs_noncommon, axis='columns', join='inner')
-            .rename_axis(mapper = ['metric'], axis = 'columns'))
-    
+    df_noncommon = (
+        pd.concat(dfs_noncommon, axis='columns', join='inner')  #
+        .rename_axis(mapper=['metric'], axis='columns'))  #
 
-    return {'tree'      : call_tree,
-            'tree_df'   : call_tree_df,
-            'common'    : df_common, 
-            'noncommon' : df_noncommon,
-            'conv_info' : conv_info}
-
-
-
+    return Box({
+        'ctree': ctree,
+        'ctree_df': ctree_df,
+        'common': df_common,
+        'noncommon': df_noncommon,
+        'conv_info': conv_info
+    })

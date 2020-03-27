@@ -19,15 +19,15 @@ input_files = argv[1:]
 output_excl = mg.process_multi(input_files,exclusive = True)
 output_incl = mg.process_multi(input_files,exclusive = False)
 
-common_excl  = output_excl['common'].sort_index()
-common_incl  = output_incl['common'].sort_index()
+common_excl  = output_excl.common.sort_index()
+common_incl  = output_incl.common.sort_index()
 
-noncommon_excl  = output_excl['noncommon'].sort_index()
-noncommon_incl  = output_incl['noncommon'].sort_index()
+noncommon_excl  = output_excl.noncommon.sort_index()
+noncommon_incl  = output_incl.noncommon.sort_index()
 
 
-convertible_metrics = output_excl['conv_info']
-calltree = output_excl['tree']
+convertible_metrics = output_excl.conv_info
+calltree = output_excl.ctree
 
 # common 
 # dataframe conversions
@@ -65,5 +65,5 @@ tu.check_float_equality(noncommon_incl_comp,noncommon_incl, tolerance )
 
 print( "Results from convert_df_to_inclusive coincide"
     "with the ones coming from cube_dump.\n"
-    f"(with tolerance up to {tolerance}")
+    f"(with tolerance up to {tolerance})")
 

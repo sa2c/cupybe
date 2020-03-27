@@ -6,15 +6,15 @@ from sys import argv
 input_files = argv[1:]
 output = mg.process_multi(input_files)
 
-common = output['common']
+common = output.common
 assert common.index.names == ['Cnode ID', 'Thread ID']
 assert common.columns.names == ['run', 'metric']
 
-noncommon = output['noncommon']
+noncommon = output.noncommon
 assert noncommon.index.names == ['Cnode ID', 'Thread ID']
 assert noncommon.columns.names == ['metric']
 
-tree_df = output['tree_df']
+tree_df = output.ctree_df
 
 # Checkin all conversions in cicrle
 
