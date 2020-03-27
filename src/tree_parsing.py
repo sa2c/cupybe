@@ -9,11 +9,14 @@ def level_fun(line):
     return int(line[:splitpoint].count(' ') / 2)
 
 
-def hierarchy(lines,
-              level_fun,
-              read_fun=lambda line: line,
-              assemble_fun=lambda root, children: (root, children)):
-    '''
+
+def collect_hierarchy(
+    lines,
+    level_fun,
+    read_fun=lambda line: line,
+    assemble_fun=lambda root, children: (root, children),
+):
+    """
     Reorders a list of lines that can be mapped to a level via ``level_fun``
     into a hierarchical structure of the kind
 
@@ -63,8 +66,9 @@ def hierarchy(lines,
     ends = starts[1:] + [len(lines)]
 
     children = [
-        hierarchy(lines[s:e], level_fun, read_fun)
-        for s, e in zip(starts, ends) if s < e
+        collect_hierarchy(lines[s:e], level_fun, read_fun)
+        for s, e in zip(starts, ends)
+        if s < e
     ]
 
     return assemble_fun(root, children)
