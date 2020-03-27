@@ -120,7 +120,6 @@ def calltree_to_df(call_tree, full_path=False):
 
 def calltree_to_string(root, max_len=60, maxlevel=None, payload=None):
     """ For an understandable, ascii art representation of the call tree.
-    Recursive function.
 
     Parameters
     ----------

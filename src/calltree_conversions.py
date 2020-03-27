@@ -105,7 +105,7 @@ def select_metrics(df, selected_metrics):
         return df.loc[:, list(possible_metrics)]
 
 
-def convert_df_to_inclusive(df_convertible, call_tree, tree_df=None):
+def convert_df_to_inclusive(df_convertible, call_tree):
     """
     Converts a DataFrame from exclusive to inclusive. A level named
     ``Cnode ID``, ``Full Callpath`` or ``Short Callpath`` must be in the index.
@@ -117,10 +117,6 @@ def convert_df_to_inclusive(df_convertible, call_tree, tree_df=None):
         exclusive to inclusive.
     call_tree: CubeTreeNode
         A recursive representation of the call tree.
-    tree_df : pandas.DataFrame or None
-        In case ``df_convertible`` is not indexed by ``Cnode ID``, a dataframe
-        that can be used to retrieve the ``Cnode ID`` from the index of 
-        ``df_convertible``.
 
     Returns
     -------
@@ -132,6 +128,7 @@ def convert_df_to_inclusive(df_convertible, call_tree, tree_df=None):
     old_index_name = ic.find_index_col(df_convertible)
 
     # dfcr = df_convertible_reindexed
+    tree_df = ct.calltree_to_df(call_tree)
     dfcr = ic.convert_index(df_convertible, tree_df, target="Cnode ID")
 
     levels_to_unstack = [
