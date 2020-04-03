@@ -115,7 +115,38 @@ def calltree_to_df(call_tree, full_path=False):
 
         df = fullpath_vs_id.merge(right=df, how="inner", on="Cnode ID")
 
+    # Adding info on levels
+    levels = (get_level(df.set_index('Cnode ID')['Parent Cnode ID']) #
+               .rename('Level') #
+               .reset_index()) #
+    df = pd.merge(df,levels,left_on = 'Cnode ID', right_on = 'Cnode ID')
+
     return df
+
+def get_level(parent_series):
+    '''
+    This function computes the levels starting from the parent information.
+
+    Parameters
+    ----------
+    parent_series : pandas.Series
+        A series containing the CNode IDs of the parents, indexed by the 
+        Cnode IDs of the children.
+    Returns
+    -------
+    levels : pandas.Series
+        A series containing the levels of each node, indexed by Cnode ID
+    '''
+
+    def get_single_level(idx):
+        if idx == 0:
+            return 0
+        else:
+            return 1 + get_single_level(parent_series[idx])
+
+    levels = [ get_single_level(idx) for idx in parent_series.index ]
+
+    return pd.Series(index = parent_series.index, data = levels)
 
 
 def calltree_to_string(root, max_len=60, maxlevel=None, payload=None):
