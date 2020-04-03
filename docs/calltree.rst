@@ -6,7 +6,7 @@
 .. autoclass:: CubeTreeNode
 .. autofunction:: get_call_tree
 .. autofunction:: calltree_to_df
-
+.. autofunction:: get_level
 
 Printing and fancy recursive stuff
 ++++++++++++++++++++++++++++++++++

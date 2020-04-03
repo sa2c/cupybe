@@ -92,8 +92,8 @@ def calltree_to_df(call_tree, full_path=False):
     Returns
     -------
     df : DataFrame
-        A dataframe with "Function Name", "Cnode ID", "Parent Cnode ID" and 
-        optionally "Full Callpath" as columns.
+        A dataframe with "Function Name", "Cnode ID", "Parent Cnode ID", 
+        "Level" and optionally "Full Callpath" as columns.
 
     """
 
