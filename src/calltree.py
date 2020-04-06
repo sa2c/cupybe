@@ -129,14 +129,18 @@ def get_level(parent_series):
 
     Parameters
     ----------
-    parent_series : pandas.Series
-        A series containing the CNode IDs of the parents, indexed by the 
-        Cnode IDs of the children.
+    parent_series : pandas.Dataframe or pandas.Series
+        Either a DataFrame containing two columns - the CNode IDs of the parent
+        and the Cnode IDs of the child, or a series containing the Cnode ID 
+        of the parent indexed by the Cnode ID of the child.
     Returns
     -------
     levels : pandas.Series
         A series containing the levels of each node, indexed by Cnode ID
     '''
+    if type(parent_series) == pd.DataFrame:
+        parent_series = parent_series.set_index('Cnode ID')['Parent Cnode ID']
+        print('Index changed')
 
     def get_single_level(idx):
         if idx == 0:
