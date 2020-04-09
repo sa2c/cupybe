@@ -222,7 +222,8 @@ def create_node(line):
     """
 
     # Find the info string between square brackets
-    info = re.search("\[(.*)]", line).groups()[0]
+    groups = re.search("(\|-)?(\S+)\s+\[(.*)\]",line).groups()
+    info = groups[2]
 
     # delete brackets
     info = re.sub("\(|\)", "", info).strip()
@@ -236,7 +237,7 @@ def create_node(line):
     attrs = {key.strip(): value.strip() for key, value in entry_pairs}
 
     # set fname as function name
-    attrs['fname'] = re.search("(\w+)\s+\[", line).groups()[0]
+    attrs['fname'] = groups[1]
 
     # rename id attr to cnode_id, if it exists
     if "id" in attrs:
@@ -245,6 +246,7 @@ def create_node(line):
 
     # Ensure that each node has a parent attribute (None by default)
     attrs['parent'] = None
+    attrs['children'] = []
 
     return CubeTreeNode(attrs)
 
