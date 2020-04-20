@@ -27,7 +27,7 @@ def process_cubex(profile_file, exclusive=True):
 
     Returns
     -------
-    calltree : calltree.CubeTreeNode
+    ctree : calltree.CubeTreeNode
         A call tree recursive object
     ctree_df : pandas.DataFrame
         A DataFrame representation of the call tree object

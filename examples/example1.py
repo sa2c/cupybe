@@ -3,9 +3,18 @@ import merger as mg
 import index_conversions as ic
 import pandas as pd
 
+from sys import argv
+
 # This gives us a number of outputs 
 # (see https://pycubelib.readthedocs.io/en/latest/merger.html)
-output_i = mg.process_cubex('../test_data/profile.cubex', exclusive=False)
+
+if len(argv) == 1:
+    input_file = '../test_data/profile.cubex'
+else:
+    input_file = argv[1]
+    print("Opening file", input_file)
+
+output_i = mg.process_cubex(input_file, exclusive=False)
 
 
 df_i = output_i.df # Dataframes with the metrics
@@ -50,15 +59,15 @@ data = ( pd.concat([times_mean,parent_child],      #
                  'Short Callpath-Parent':'Parent'},#
              axis = 'columns')                     #
          .pipe(filter_small_time,                  #
-               rel_threshold=0.01))                #
+               rel_threshold=0.0001))             #
 
 # PLOTLY 
 import plotly.express as px
 
 fig = px.sunburst( data,  #
-                   names=data['Short Callpath'],  #
-                   parents=data['Parent'],  #
-                   values=data['Time (Inclusive)'],  #
+                   names='Short Callpath',  #
+                   parents='Parent',  #
+                   values='Time (Inclusive)',  #
                    branchvalues = 'total')
 
 
