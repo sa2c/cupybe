@@ -100,12 +100,16 @@ def process_multi(profile_files, exclusive=True):
         DataFrame representation of the call tree;
     common : pandas.DataFrame
         A data frame containing all the data relative to metrics that are 
-        shared among *all* the ``.cubex`` files;
+        shared among *all* the ``.cubex`` files ("common" metrics);
     noncommon : pandas.DataFrame
         A data frame containing all the data relatige that are specific to 
-        single ``.cubex`` files;
+        single ``.cubex`` files ("non-common" metrics);
     conv_info : list
         A list of metrics that can be converted to inclusive.
+    ncmetric : padas.DataFrame
+        A dataframe expressing, for each metric coming from only a single
+        ``.cubex`` file (the "non-common"  metrics) the ID of the run it came 
+        from.
 
     """
     # Assuming that the calltree info is equal for all
@@ -122,9 +126,10 @@ def process_multi(profile_files, exclusive=True):
 
     conv_info = set.union(*conv_infos)
 
+    columns_df = [set(df.columns) for df in dfs]
+
     # finding columns COMMON to all DFs and creating
     # a dataframe for those
-    columns_df = [set(df.columns) for df in dfs]
 
     check_column_sets(columns_df)
 
@@ -154,10 +159,18 @@ def process_multi(profile_files, exclusive=True):
         pd.concat(dfs_noncommon, axis='columns', join='inner')  #
         .rename_axis(mapper=['metric'], axis='columns'))  #
 
+    noncommon_columns_run_tuples = [
+        (col, i) for i, columns in enumerate(noncommon_columns_df)
+        for col in columns
+    ]
+    noncommon_columns_run_df = pd.DataFrame(data=noncommon_columns_run_tuples,
+                                            columns=['metric', 'run'])
+
     return Box({
         'ctree': ctree,
         'ctree_df': ctree_df,
         'common': df_common,
         'noncommon': df_noncommon,
-        'conv_info': conv_info
+        'conv_info': conv_info,
+        'ncmetrics' : noncommon_columns_run_df
     })
