@@ -94,7 +94,7 @@ def process_multi(profile_files, exclusive=True):
 
     Returns
     -------
-    tree : calltree.CubeTreeNode
+    ctree : calltree.CubeTreeNode
         A call tree recursive structure;
     ctree_df : pandas.DataFrame
         DataFrame representation of the call tree;
