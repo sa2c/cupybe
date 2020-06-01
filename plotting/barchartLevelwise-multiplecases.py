@@ -31,66 +31,82 @@ import sys
 import os
 import numpy as np
 
-
-inpfilename ="../test_data/profile-25m-nproc40-nsteps10.cubex"
+data_dir = "../test_data"
+inpfilename = os.path.join(data_dir, "profile-25m-nproc40-nsteps10.cubex")
 metric = "time"
 exclincl = False
 nfuncs = 10
 
 
-def  get_metric_by_level(inpfilename):
-    #### get depth level for each function in the call tree
-    #
-    #######################################################
+def get_metric_by_level(inpfilename):
+    '''
+    get depth level for each function in the call tree
+    '''
 
     call_tree = ct.get_call_tree(inpfilename)
-    
-    df = ct.calltree_to_df(call_tree).set_index('Cnode ID')
-    
-    parent_series = df['Parent Cnode ID']
-    
-    levels = ct.get_level(parent_series)
 
+    df = ct.calltree_to_df(call_tree).set_index('Cnode ID')
+
+    parent_series = df['Parent Cnode ID']
+
+    levels = ct.get_level(parent_series)
 
     #### get the data for the given metric
     #
     ######################################
-    
-    # This gives us a number of outputs 
+
+    # This gives us a number of outputs
     # (see https://pycubelib.readthedocs.io/en/latest/merger.html)
-    #output_i = mg.process_cubex('../test_data/profile.cubex', exclusive=False)
-    #output_i = mg.process_cubex('../test_data/profile-25m-nproc40-nsteps10.cubex', exclusive=True)
-    
+
     output_i = mg.process_cubex(inpfilename, exclusive=exclincl)
-    
+
     # We convert the Cnode IDs to short callpaths in the dataframe.
-    df_i = ic.convert_index(output_i.df, output_i.ctree_df, target = 'Short Callpath')
-    
+    df_i = ic.convert_index(
+        output_i.df, output_i.ctree_df, target='Short Callpath')
+
     # extract the data
-    res = df_i.reset_index()[['Short Callpath', 'Thread ID', metric]].groupby('Short Callpath').sum().sort_values([metric])[metric]
+    res = df_i.reset_index()[[
+        'Short Callpath', 'Thread ID', metric
+    ]].groupby('Short Callpath').sum().sort_values([metric])[metric]
 
     res_df = pd.DataFrame(res)
-    
+
     #res_df.index = pd.MultiIndex.from_tuples(res_df.index.str.split(',').tolist())
     time = res_df.reset_index()['time']
-    fname = res_df.reset_index()['Short Callpath'].str.extract(r'(\w+),([0-9]+)')[0]
-    cnode_id = res_df.reset_index()['Short Callpath'].str.extract(r'(\w+),([0-9]+)')[1].astype(int)
-    
-    combined = pd.merge(left= pd.concat([time,fname,cnode_id], axis = 'columns').rename({'time':'time',0:'fname',1:'Cnode ID'},axis = 'columns'), right = levels.reset_index().rename({0 : 'level'}, axis = 'columns'),on = 'Cnode ID')
-    
+    fname = res_df.reset_index()['Short Callpath'].str.extract(
+        r'(\w+),([0-9]+)')[0]
+    cnode_id = res_df.reset_index()['Short Callpath'].str.extract(
+        r'(\w+),([0-9]+)')[1].astype(int)
+
+    combined = pd.merge(
+        left=pd.concat([time, fname, cnode_id],
+                       axis='columns').rename({
+                           'time': 'time',
+                           0: 'fname',
+                           1: 'Cnode ID'
+                       },
+                                              axis='columns'),
+        right=levels.reset_index().rename({0: 'level'}, axis='columns'),
+        on='Cnode ID')
+
     #time_data = combined.sort_values(by = ['level','time']).head(10)
-    
+
     # to extract levels below third levels
-    time_data = combined[combined['level'] == 2].sort_values(by = ['level','time'], ascending=False)
+    time_data = combined[combined['level'] == 2].sort_values(
+        by=['level', 'time'], ascending=False)
 
     return time_data
 
 
-
 ##
-time_data1 = get_metric_by_level("profile-5m-nproc40-nsteps10.cubex")
-time_data2 = get_metric_by_level("profile-10m-nproc40-nsteps10.cubex")
-time_data3 = get_metric_by_level("profile-25m-nproc40-nsteps10.cubex")
+files = [
+    "profile-5m-nproc40-nsteps10.cubex", "profile-10m-nproc40-nsteps10.cubex",
+    "profile-25m-nproc40-nsteps10.cubex"
+]
+
+time_data1, time_data2, time_data3 = [
+    get_metric_by_level(os.path.join(data_dir, f)) for f in files
+]
 
 print(time_data1)
 
@@ -100,12 +116,15 @@ print(time_data1)
 
 X = np.arange(len(time_data1))
 
-plt.bar(X-0.25, time_data1['time'], color = 'b', width = 0.25, label='M1 mesh')
-plt.bar(X,      time_data2['time'], color = 'r', width = 0.25, label='M2 mesh')
-plt.bar(X+0.25, time_data3['time'], color = 'g', width = 0.25, label='M3 mesh')
+plt.bar(X - 0.25, time_data1['time'], color='b', width=0.25, label='M1 mesh')
+plt.bar(X, time_data2['time'], color='r', width=0.25, label='M2 mesh')
+plt.bar(X + 0.25, time_data3['time'], color='g', width=0.25, label='M3 mesh')
 
 plt.xlabel("Function name", fontsize=14)
-plt.title("metric="+metric+" "+("(Exclusive)" if exclincl==True else "(Inclusive)"), fontsize=14)
+plt.title(
+    "metric=" + metric + " " +
+    ("(Exclusive)" if exclincl == True else "(Inclusive)"),
+    fontsize=14)
 plt.legend(frameon=False)
 
 metric_time_list = ["time", "max_time", "min_time"]
@@ -128,4 +147,3 @@ plt.tight_layout()
 #plt.show()
 
 plt.savefig("FuncsVsMetric.png", dpi=200)
-

@@ -31,9 +31,8 @@ import sys
 import os
 import numpy as np
 
-
-#inpfilename ="../test_data/profile-25m-nproc40-nsteps10.cubex"
-inpfilename ="profile-5m-nproc40-nsteps10.cubex"
+data_dir = "../test_data"
+inpfilename = os.path.join(data_dir, "profile-5m-nproc40-nsteps10.cubex")
 metric = "time"
 exclincl = False
 callpathid = 56
@@ -53,9 +52,14 @@ call_tree = ct.get_call_tree(inpfilename)
 
 #levels = ct.get_level(parent_series)
 
-func_node = next( node for node in ct.iterate_on_call_tree(call_tree) if node.fname==funcname)
+func_node = next(
+    node for node in ct.iterate_on_call_tree(call_tree)
+    if node.fname == funcname)
 
-children_info = [ node.fname+","+str(node.cnode_id) for node in ct.iterate_on_call_tree(func_node, 1) ]
+children_info = [
+    node.fname + "," + str(node.cnode_id)
+    for node in ct.iterate_on_call_tree(func_node, 1)
+]
 
 # remove the first entry since it the function we are interested in
 children_info = children_info[1:]
@@ -67,22 +71,27 @@ children_info2 = [line for line in children_info if line[0:3] == "MPI"]
 output_i = mg.process_cubex(inpfilename, exclusive=exclincl)
 
 # We convert the Cnode IDs to short callpaths in the dataframe.
-df_i = ic.convert_index(output_i.df, output_i.ctree_df, target = 'Short Callpath')
+df_i = ic.convert_index(
+    output_i.df, output_i.ctree_df, target='Short Callpath')
 
 res_df = df_i.loc[children_info2]
 
-
-res = res_df.reset_index()[['Short Callpath', 'Thread ID', metric]].groupby('Short Callpath').sum().sort_values([metric],ascending=False)[metric]
+res = res_df.reset_index()[[
+    'Short Callpath', 'Thread ID', metric
+]].groupby('Short Callpath').sum().sort_values([metric],
+                                               ascending=False)[metric]
 
 #res = res.head( 11 if len(res) > 11 else len(res)).tail( 10 if len(res) > 10 else len(res)-1 )
-res = res.head( 11 if len(res) > 11 else len(res))
-
-
+res = res.head(11 if len(res) > 11 else len(res))
 
 res.plot(kind='bar')
 
-plt.xlabel("Function name: "+funcname, fontsize=12, color='blue', fontweight='bold')
-plt.title("metric: "+metric+" "+("(Exclusive)" if exclincl==True else "(Inclusive)"), fontsize=12)
+plt.xlabel(
+    "Function name: " + funcname, fontsize=12, color='blue', fontweight='bold')
+plt.title(
+    "metric: " + metric + " " +
+    ("(Exclusive)" if exclincl == True else "(Inclusive)"),
+    fontsize=12)
 plt.ylabel("Time [s]", fontsize=12)
 
 plt.legend('', frameon=False)
@@ -94,4 +103,3 @@ plt.xticks(rotation=80)
 #plt.show()
 
 plt.savefig("FuncsVsMetric.png")
-

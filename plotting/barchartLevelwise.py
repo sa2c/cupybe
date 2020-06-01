@@ -30,8 +30,7 @@ import calltree as ct
 import sys
 import os
 
-
-inpfilename ="../test_data/profile-25m-nproc40-nsteps10.cubex"
+inpfilename = "../test_data/profile-25m-nproc40-nsteps10.cubex"
 metric = "time"
 exclincl = False
 nfuncs = 10
@@ -51,7 +50,6 @@ if len(sys.argv) > 3:
 if len(sys.argv) > 4:
     nfuncs = int(sys.argv[4])
 
-
 #### get depth level for each function in the call tree
 #
 #######################################################
@@ -64,12 +62,11 @@ parent_series = df['Parent Cnode ID']
 
 levels = ct.get_level(parent_series)
 
-
 #### get the data for the given metric
 #
 ######################################
 
-# This gives us a number of outputs 
+# This gives us a number of outputs
 # (see https://pycubelib.readthedocs.io/en/latest/merger.html)
 #output_i = mg.process_cubex('../test_data/profile.cubex', exclusive=False)
 #output_i = mg.process_cubex('../test_data/profile-25m-nproc40-nsteps10.cubex', exclusive=True)
@@ -77,36 +74,54 @@ levels = ct.get_level(parent_series)
 output_i = mg.process_cubex(inpfilename, exclusive=exclincl)
 
 # We convert the Cnode IDs to short callpaths in the dataframe.
-df_i = ic.convert_index(output_i.df, output_i.ctree_df, target = 'Short Callpath')
+df_i = ic.convert_index(
+    output_i.df, output_i.ctree_df, target='Short Callpath')
 
 #df_i = df_i.rename(columns={"Short Callpath": "Short_Callpath"})
 #df_i[['Callpath','CpathID']] = df_i.Short_Callpath.str.split(",",expand=True)
 #df_i.CpathID = df_i.CpathID.astype(int)
 
 # extract the data
-res = df_i.reset_index()[['Short Callpath', 'Thread ID', metric]].groupby('Short Callpath').sum().sort_values([metric])[metric]
+res = df_i.reset_index()[['Short Callpath', 'Thread ID',
+                          metric]].groupby('Short Callpath').sum().sort_values(
+                              [metric])[metric]
 
 res_df = pd.DataFrame(res)
 
 #res_df.index = pd.MultiIndex.from_tuples(res_df.index.str.split(',').tolist())
 time = res_df.reset_index()['time']
-fname = res_df.reset_index()['Short Callpath'].str.extract(r'(\w+),([0-9]+)')[0]
-cnode_id = res_df.reset_index()['Short Callpath'].str.extract(r'(\w+),([0-9]+)')[1].astype(int)
+fname = res_df.reset_index()['Short Callpath'].str.extract(
+    r'(\w+),([0-9]+)')[0]
+cnode_id = res_df.reset_index()['Short Callpath'].str.extract(
+    r'(\w+),([0-9]+)')[1].astype(int)
 
-combined = pd.merge(left= pd.concat([time,fname,cnode_id], axis = 'columns').rename({'time':'time',0:'fname',1:'Cnode ID'},axis = 'columns'), right = levels.reset_index().rename({0 : 'level'}, axis = 'columns'),on = 'Cnode ID')
+combined = pd.merge(
+    left=pd.concat([time, fname, cnode_id],
+                   axis='columns').rename({
+                       'time': 'time',
+                       0: 'fname',
+                       1: 'Cnode ID'
+                   },
+                                          axis='columns'),
+    right=levels.reset_index().rename({0: 'level'}, axis='columns'),
+    on='Cnode ID')
 
 #time_data = combined.sort_values(by = ['level','time']).head(10)
 
 # to extract levels below third levels
-time_data = combined[combined['level'] == 2].sort_values(by = ['level','time'], ascending=False)
+time_data = combined[combined['level'] == 2].sort_values(
+    by=['level', 'time'], ascending=False)
 
 print(time_data)
 
 time_data.plot(kind='bar', x='fname', y='time')
 
 plt.xlabel("Function name", fontsize=14)
-plt.title("metric="+metric+" "+("(Exclusive)" if exclincl==True else "(Inclusive)"), fontsize=14)
-plt.legend('',frameon=False)
+plt.title(
+    "metric=" + metric + " " +
+    ("(Exclusive)" if exclincl == True else "(Inclusive)"),
+    fontsize=14)
+plt.legend('', frameon=False)
 
 metric_time_list = ["time", "max_time", "min_time"]
 

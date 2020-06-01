@@ -29,8 +29,7 @@ import matplotlib.pyplot as plt
 import sys
 import os
 
-
-inpfilename ="../test_data/profile-25m-nproc40-nsteps10.cubex"
+inpfilename = "../test_data/profile-25m-nproc40-nsteps10.cubex"
 metric = "time"
 exclincl = True
 nfuncs = 10
@@ -50,8 +49,7 @@ if len(sys.argv) > 3:
 if len(sys.argv) > 4:
     nfuncs = int(sys.argv[4])
 
-
-# This gives us a number of outputs 
+# This gives us a number of outputs
 # (see https://pycubelib.readthedocs.io/en/latest/merger.html)
 #output_i = mg.process_cubex('../test_data/profile.cubex', exclusive=False)
 #output_i = mg.process_cubex('../test_data/profile-25m-nproc40-nsteps10.cubex', exclusive=True)
@@ -59,23 +57,29 @@ if len(sys.argv) > 4:
 output_i = mg.process_cubex(inpfilename, exclusive=exclincl)
 
 # We convert the Cnode IDs to short callpaths in the dataframe.
-df_i = ic.convert_index(output_i.df, output_i.ctree_df, target = 'Short Callpath')
+df_i = ic.convert_index(
+    output_i.df, output_i.ctree_df, target='Short Callpath')
 
 # We calculate the mean of the time
 #res = df_i.reset_index()[['Short Callpath', 'Thread ID', 'visits']].groupby('Short Callpath').sum().sort_values(['visits'])['visits'].tail(11).head(10)
 
 #res = df_i.reset_index()[['Short Callpath', 'Thread ID', 'max_time']].groupby('Short Callpath').sum().sort_values(['max_time'])['max_time'].tail(11).head(10)
 
-res = df_i.reset_index()[['Short Callpath', 'Thread ID', metric]].groupby('Short Callpath').sum().sort_values([metric],ascending=False)[metric]
+res = df_i.reset_index()[['Short Callpath', 'Thread ID',
+                          metric]].groupby('Short Callpath').sum().sort_values(
+                              [metric], ascending=False)[metric]
 
 res = res.head(nfuncs)
 
 print(res)
 
-res.plot(kind='bar')#, x='Short Callpath', y='visits')
+res.plot(kind='bar')  #, x='Short Callpath', y='visits')
 
 plt.xlabel("Function name", fontsize=14)
-plt.title("metric="+metric+" "+("(Exclusive)" if exclincl==True else "(Inclusive)"), fontsize=14)
+plt.title(
+    "metric=" + metric + " " +
+    ("(Exclusive)" if exclincl == True else "(Inclusive)"),
+    fontsize=14)
 #plt.legend('',frameon=False)
 
 metric_time_list = ["time", "max_time", "min_time"]
