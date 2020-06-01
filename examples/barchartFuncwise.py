@@ -42,7 +42,7 @@ funcname = "ns3d_"
 
 # get depth level for each function in the call tree
 
-call_tree = ct.get_call_tree()
+call_tree = ct.get_call_tree(inpfilename)
 
 #df = ct.calltree_to_df(call_tree).set_index('Cnode ID')
 
