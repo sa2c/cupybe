@@ -1,4 +1,8 @@
 #!/bin/bash
+
+# Make sure cube_dump is visible
+which cube_dump || echo "cube_dump not accessible!" && exit 1
+
 export PYTHONPATH=$PYTHONPATH:../src
 
 export FAILED=.failed.tests
