@@ -1,11 +1,32 @@
 #!/usr/bin/env python3
+'''
+This example script processes a single `.cubex` file, starts a dashboard to 
+display the data as a sunburst or a treemap plot (the user can switch the 
+visualisation to both types). The threshold for displaying the branches/leaves 
+of the calltree, in terms of fraction of total runtime, can be adjusted with 
+the slider.
+
+Usage: ./example3.py <cubex file> 
+
+if <cubex file> is not provided, '../test_data/profile.cubex' is used.
+
+'''
 import merger as mg
 import index_conversions as ic
 import pandas as pd
 
+from sys import argv
+
 # This gives us a number of outputs
 # (see https://pycubelib.readthedocs.io/en/latest/merger.html)
-output_i = mg.process_cubex('../test_data/profile.cubex', exclusive=False)
+
+if len(argv) == 1:
+    input_file = '../test_data/profile.cubex'
+else:
+    input_file = argv[1]
+    print("Opening file", input_file)
+
+output_i = mg.process_cubex(input_file, exclusive=False)
 
 df_i = output_i.df  # Dataframes with the metrics
 
@@ -36,16 +57,16 @@ parent_child = (
 
 
 data_nofilter = ( pd.concat([times_mean,times_imbalance,parent_child],#
-                            axis = 'columns')   #
-                  .reset_index()                                  #
-                  .rename(                                        #
-                      mapper = {                                  #
-                          'index':'Short Callpath',               #
-                          'mean':'Time (Inclusive)',              #
-                          'imbalance':'Time Imbalance',           #
-                          'Short Callpath-Parent':'Parent'},      #
-                      axis = 'columns')                           #
-                  )                                               #
+    axis = 'columns')   #
+    .reset_index()                                  #
+    .rename(                                        #
+        mapper = {                                  #
+            'index':'Short Callpath',               #
+            'mean':'Time (Inclusive)',              #
+            'imbalance':'Time Imbalance',           #
+            'Short Callpath-Parent':'Parent'},      #
+        axis = 'columns')                           #
+    )                                               #
 
 
 def filter_small_time(df, rel_threshold):
@@ -82,8 +103,9 @@ def treemap(data):
         color=data['Time Imbalance'],  #
         branchvalues="total")  #
 
+    import dash
 
-import dash
+
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
@@ -91,68 +113,93 @@ from dash.dependencies import Input, Output
 external_stylesheets = []  #'https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-style_centered = {'text-align' : 'center'}
-app.layout = html.Div( style={ 'position': 'fixed','width':'100%','height':'50em' },
-        children=[
-            html.H1(children='Cube Dump Data', style={
-                'text-align' : 'center',
-                'top' : '0%',
-                'height' : '10%',
-                'width' : '100%'}
-                ),
-            html.Div( style={ 'position': 'absolute', 
-                'top': '10%', 
-                'width' : '100%',
-                'height' : '90%',
-                },
-                children=[ html.Div(
-                        style={
-                            'margin': 'auto',
-                            'position': 'absolute',
-                            'top': '0%',
-                            'left': '0%',
-                            'width': '15%',
-                            'height' : '100%',
-                            },
-                        children=[
-                            html.H3(children="Min Time threshold",
+style_centered = {'text-align': 'center'}
+app.layout = html.Div(
+    style={
+        'position': 'fixed',
+        'width': '100%',
+        'height': '50em'
+    },
+    children=[
+        html.H1(
+            children='Cube Dump Data',
+            style={
+                'text-align': 'center',
+                'top': '0%',
+                'height': '10%',
+                'width': '100%'
+            }),
+        html.Div(
+            style={
+                'position': 'absolute',
+                'top': '10%',
+                'width': '100%',
+                'height': '90%',
+            },
+            children=[
+                html.Div(
+                    style={
+                        'margin': 'auto',
+                        'position': 'absolute',
+                        'top': '0%',
+                        'left': '0%',
+                        'width': '15%',
+                        'height': '100%',
+                    },
+                    children=[
+                        html.H3(
+                            children="Min Time threshold",
+                            style=style_centered),
+                        dcc.Slider(
+                            id='log-min-time-threshold',
+                            min=-3,
+                            step=0.1,
+                            max=-0.5,
+                            value=-2,
+                        ),
+                        html.Div(children=[
+                            html.H5(
+                                children="Threshold Value:",
                                 style=style_centered),
-                            dcc.Slider(
-                                id='log-min-time-threshold',
-                                min=-3,
-                                step=0.1,
-                                max=-0.5,
-                                value=-2,
-                                ),
-                            html.Div(children=[
-                                html.H5(children="Threshold Value:",
-                                    style=style_centered),
-                                html.H5(id='threshold-value', children="0.01"),
-                                ]),
-                            html.H5(children="Visualisation type",
-                                style=style_centered),
-                            dcc.Dropdown(id='vis-choice',
-                                options=[
-                                    { 'label': 'Treemap', 'value': 'treemap' },
-                                    { 'label': 'Sunburst', 'value': 'sunburst' },
-                                    ]),
-                                ]),
-                        html.Div(style={
-                            'position': 'absolute',
-                            'top': '0%',
-                            'right': '0%',
-                            'width': '85%',
-                            'height' : '100%',
-                            },
-                            children=[
-                                dcc.Graph(id='hierarchy-datavis',
-                                    figure=treemap(
-                                        filter_small_time(
-                                            data_nofilter, 0.01)),
-                                        style = {'position' : 'absolute','height' : '100%', 'width' : '100%'}),
-                                        ]),
-                            ])
-                ])
+                            html.H5(id='threshold-value', children="0.01"),
+                        ]),
+                        html.H5(
+                            children="Visualisation type",
+                            style=style_centered),
+                        dcc.Dropdown(
+                            id='vis-choice',
+                            options=[
+                                {
+                                    'label': 'Treemap',
+                                    'value': 'treemap'
+                                },
+                                {
+                                    'label': 'Sunburst',
+                                    'value': 'sunburst'
+                                },
+                            ]),
+                    ]),
+                html.Div(
+                    style={
+                        'position': 'absolute',
+                        'top': '0%',
+                        'right': '0%',
+                        'width': '85%',
+                        'height': '100%',
+                    },
+                    children=[
+                        dcc.Graph(
+                            id='hierarchy-datavis',
+                            figure=treemap(
+                                filter_small_time(data_nofilter, 0.01)),
+                            style={
+                                'position': 'absolute',
+                                'height': '100%',
+                                'width': '100%'
+                            }),
+                    ]),
+            ])
+    ])
 
 
 @app.callback(
@@ -170,8 +217,9 @@ def update_visualisation(logthreshold, vistype):
         return sunburst(data)
 
 
-@app.callback(Output('threshold-value', 'children'),
-              [Input('log-min-time-threshold', 'value')])
+@app.callback(
+    Output('threshold-value', 'children'),
+    [Input('log-min-time-threshold', 'value')])
 def update_threshold_text(value):
     return f"{(10 ** value):1.4f}"
 
