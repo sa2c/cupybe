@@ -1,6 +1,14 @@
 
 import numpy as np
 
+SINGLE_FILE="../test_data/profile.cubex"
+SINGLE_FILE_SAMPLING="../test_data/profile.wsampling.cubex"
+SINGLE_FILE_CPP="../test_data/profile_cpp.cubex"
+SCALASCA_OUTPUT="../test_data/scalasca_output"
+
+SINGLE_FILES = [SINGLE_FILE,SINGLE_FILE_SAMPLING,SINGLE_FILE_CPP]
+
+
 def check_float_equality(a,b,tolerance = 1e-5):
     '''
     Check equality between two object having a ``values`` member (e.g.,

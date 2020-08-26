@@ -69,7 +69,7 @@ def iterate_on_call_tree(root, maxlevel=None):
     Returns
     -------
     res : CubeTreeNode
-        Iterator yielding ``CubeTreeNode``\s.
+        Iterator yielding ``CubeTreeNode`` s.
         
     """
     yield root
@@ -153,7 +153,7 @@ def get_level(parent_series):
     return pd.Series(index = parent_series.index, data = levels)
 
 
-def calltree_to_string(root, max_len=60, maxlevel=None, payload=None):
+def calltree_to_string(root, max_len=60, maxlevel=None, payload=None, full = True):
     """ For an understandable, ascii art representation of the call tree.
 
     Parameters
@@ -172,11 +172,12 @@ def calltree_to_string(root, max_len=60, maxlevel=None, payload=None):
     res : string
         string representation of the call tree and the payload.
     """
-    return _calltree_to_string(root, "", max_len, maxlevel, payload)
+    return _calltree_to_string(root, "", max_len, maxlevel, payload, full)
 
 
-def _calltree_to_string(root, line_prefix="", max_len=60, maxlevel=None, payload=None):
-    res = line_prefix + f"-{root.fname}:"
+def _calltree_to_string(root, line_prefix="", max_len=60, maxlevel=None, payload=None, full = True):
+    fname = root.fname_full if full else root.fname
+    res = line_prefix + f"-{fname}:"
     to_print = str(root.cnode_id if payload is None else payload[root.cnode_id])
     res += " " * (max_len - len(res) - len(to_print))
     res += to_print + "\n"
@@ -184,10 +185,10 @@ def _calltree_to_string(root, line_prefix="", max_len=60, maxlevel=None, payload
     if len(root.children) != 0 and (maxlevel is None or maxlevel > 0):
         for child in root.children[:-1]:
             res += _calltree_to_string(
-                child, line_prefix + "  |", max_len, new_maxlevel, payload
+                child, line_prefix + "  |", max_len, new_maxlevel, payload, full
             )
         res += _calltree_to_string(
-            root.children[-1], line_prefix + "   ", max_len, new_maxlevel, payload
+            root.children[-1], line_prefix + "   ", max_len, new_maxlevel, payload, full
         )
     return res
 
@@ -209,24 +210,33 @@ def get_fpath_vs_id(root, parent_full_callpath=""):
         data += get_fpath_vs_id(child, full_callpath + "/")
     return data
 
-
-def create_node(line):
+def create_node_cpp_template(line):
     """
     Parse a line in the call tree graph output by 'cube_dump -w'
     returning any attributes found, as well as attributes `parent` and `level`.
 
     INPUT:
-    '    |-MPI_Finalize  [ ( id=163,   mod=), -1, -1, paradigm=mpi, role=function, url=, descr=, mode=MPI]'
+          |-void Eigen::internal::call_dense_assignment_loop(const DstXprType&, const SrcXprType&, const Functor&) [with DstXprType = Eigen::Matrix<double, -1, -1, 1>; SrcXprType = Eigen::Matrix<double, -1, -1>; Functor = Eigen::internal::assign_op<double>]  [ ( id=257,   mod=), 632, 646, paradigm=compiler, role=function, url=, descr=, mode=/lustrehome/home/s.engkadac/mylibs/eigen-devel/Eigen/src/Core/AssignEvaluator.h]
     OUTPUT:
-    CubeTreeNode with the attributes read from key=value pairs in input string. In this case: id=163, mod='', paradigm='mpi' etc
+       fname = "Eigen::internal::call_dense_assignment_loop", 
+       fname_full = "void Eigen::internal::call_dense_assignment_loop(const DstXprType&, const SrcXprType&, const Functor&)"
+       template_subs = {'DstXprType': 'Eigen::Matrix<double, -1, -1, 1>',
+                        'SrcXprType': 'Eigen::Matrix<double, -1, -1>',
+                        'Functor': 'Eigen::internal::assign_op<double>'}
+       cnode_id = 257
+       ...
     """
-
-    # Find the info string between square brackets
-    groups = re.search("(\|-)?(\S+)\s+\[(.*)\]",line).groups()
-    info = groups[2]
+    # finding the function name
+    groups = re.search(r"(\|-)?([^[\|]*)\[with (.+)\]\s+\[(.*)\]",line).groups()
+    fname = groups[1]
+    template_args = groups[2]
+    info = groups[3]
 
     # delete brackets
-    info = re.sub("\(|\)", "", info).strip()
+    info = re.sub(r"\(|\)", "", info).strip()
+
+    # template substitutions 
+    template_subs = dict([ (a.strip(), b.strip()) for a,b in [ s.split('=') for s in groups[2].split(';')]])
 
     # split entries into lists of key/value pairs
     entry_pairs = filter(
@@ -237,7 +247,16 @@ def create_node(line):
     attrs = {key.strip(): value.strip() for key, value in entry_pairs}
 
     # set fname as function name
-    attrs['fname'] = groups[1]
+    fname_full = fname.strip()
+    if '(' in fname:
+        fname = fname[:fname.find('(')]
+        fname = fname.split()[-1]
+
+    attrs['fname'] = fname
+    attrs['fname_full'] = fname_full
+
+    # template substitutions
+    attrs['template_subs'] = template_subs
 
     # rename id attr to cnode_id, if it exists
     if "id" in attrs:
@@ -250,6 +269,115 @@ def create_node(line):
 
     return CubeTreeNode(attrs)
 
+
+def create_node_cpp(line):
+    """
+    Parse a line in the call tree graph output by 'cube_dump -w'
+    returning any attributes found, as well as attributes `parent` and `level`.
+
+    INPUT:
+          |-virtual SolverPetsc::~SolverPetsc()  [ ( id=302,   mod=), 13, 20, paradigm=compiler, role=function, url=, descr=, mode=/lustrehome/home/s.engkadac/cfdsfemmpi/src/base/SolverPetsc.cpp]
+    OUTPUT:
+          CubeTreeNode with the attributes read from key=value pairs in input string. In this case: 
+          fname="SolverPetsc::~SolverPetsc()", id=302, mod='', paradigm='mpi' etc
+    """
+    # finding the function name
+    groups = re.search(r"(\|-)?([^[\|]*)\s+\[(.*)\]",line).groups()
+    fname = groups[1]
+    info = groups[2]
+
+    # delete brackets
+    info = re.sub(r"\(|\)", "", info).strip()
+
+    # split entries into lists of key/value pairs
+    entry_pairs = filter(
+        lambda x: len(x) == 2, [entry.split("=") for entry in info.split(",")]
+    )
+
+    # extract attributes from entry pairs
+    attrs = {key.strip(): value.strip() for key, value in entry_pairs}
+
+    # set fname as function name
+    fname_full = fname.strip()
+    if '(' in fname_full:
+        fname = fname_full[:fname_full.find('(')]
+        fname = fname.replace(', ',',')
+        fname = fname.split()[-1]
+
+    attrs['fname'] = fname
+    attrs['fname_full'] = fname_full
+
+    # rename id attr to cnode_id, if it exists
+    if "id" in attrs:
+        attrs['cnode_id'] = int(attrs["id"])
+        del attrs["id"]
+
+    # Ensure that each node has a parent attribute (None by default)
+    attrs['parent'] = None
+    attrs['children'] = []
+
+    return CubeTreeNode(attrs)
+
+
+def create_node_simple(line):
+    """
+    Parse a line in the call tree graph output by 'cube_dump -w'
+    returning any attributes found, as well as attributes `parent` and `level`.
+
+    INPUT:
+    '    |-MPI_Finalize  [ ( id=163,   mod=), -1, -1, paradigm=mpi, role=function, url=, descr=, mode=MPI]'
+    OUTPUT:
+    CubeTreeNode with the attributes read from key=value pairs in input string. In this case: fname="MPI_Finalize", id=163, mod='', paradigm='mpi' etc
+    """
+
+    # Find the info string between square brackets
+    groups = re.search(r"(\|-)?(\S+)\s+\[(.*)\]",line).groups()
+    fname = groups[1]
+    info = groups[2]
+
+    # delete brackets
+    info = re.sub(r"\(|\)", "", info).strip()
+
+    # split entries into lists of key/value pairs
+    entry_pairs = filter(
+        lambda x: len(x) == 2, [entry.split("=") for entry in info.split(",")]
+    )
+
+    # extract attributes from entry pairs
+    attrs = {key.strip(): value.strip() for key, value in entry_pairs}
+
+    # set fname as function name
+    attrs['fname'] = fname 
+    attrs['fname_full'] = fname
+
+    # rename id attr to cnode_id, if it exists
+    if "id" in attrs:
+        attrs['cnode_id'] = int(attrs["id"])
+        del attrs["id"]
+
+    # Ensure that each node has a parent attribute (None by default)
+    attrs['parent'] = None
+    attrs['children'] = []
+
+    return CubeTreeNode(attrs)
+
+def create_node(line):
+    def matches_addr_range(string):
+        return re.search(r"\[0x[0-9a-f]+,0x[0-9a-f]+\)",string)
+
+    for  create_node_fun in [create_node_simple, create_node_cpp, create_node_cpp_template]:
+        node = create_node_fun(line)
+        match_addr_range = matches_addr_range(node.fname)
+        if match_addr_range:
+            strtocheck = node.fname[:match_addr_range.span()[0]] + \
+                    node.fname[match_addr_range.span()[1]:]
+        else :
+            strtocheck = node.fname
+        brackets_in_fname = any( b in strtocheck for b in [')','('])
+        if brackets_in_fname:
+            print(node.fname)
+        if 'cnode_id' in node.keys() and not brackets_in_fname:
+            return node
 
 def get_call_tree_lines(cube_dump_w_text):
     """

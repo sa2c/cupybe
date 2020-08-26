@@ -72,7 +72,7 @@ data = ( pd.concat([times_mean,times_imbalance,parent_child],#
                  'Short Callpath-Parent':'Parent'},      #
              axis = 'columns')                           #
          .pipe(filter_small_time,                        #
-               rel_threshold=0.01))                      #
+               rel_threshold=0.0001))                      #
 
 # PLOTLY
 import plotly.express as px
