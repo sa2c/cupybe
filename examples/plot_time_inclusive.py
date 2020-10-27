@@ -15,7 +15,7 @@ import pandas as pd
 from sys import argv
 
 # This gives us a number of outputs
-# (see https://pycubelib.readthedocs.io/en/latest/merger.html)
+# (see https://cupybe.readthedocs.io/en/latest/merger.html)
 
 if len(argv) == 1:
     input_file = '../test_data/profile.cubex'
@@ -71,13 +71,25 @@ data = ( pd.concat([times_mean,parent_child],      #
 # PLOTLY
 import plotly.express as px
 
-fig = px.sunburst(
-    data,  #
-    names='Short Callpath',  #
-    parents='Parent',  #
-    values='Time (Inclusive)',  #
-    branchvalues='total')
+sunburst = px.sunburst( data,  #
+                        names='Short Callpath',  #
+                        parents='Parent',  #
+                        values='Time (Inclusive)',  #
+                        branchvalues='total')
 
 # Shows in a browser.
-fig.show()  # it can be exported to .png or .jpeg from the browser view
-fig.write_html('sunburst1.html')  # a huge html file is produced
+sunburst.show()  # it can be exported to .png or .jpeg from the browser view
+sunburst.write_html('sunburst1.html')  # a huge html file is produced
+
+# treemap
+treemap = px.treemap( data,  #
+                      names='Short Callpath',  #
+                      parents='Parent',  #
+                      values='Time (Inclusive)',
+                      branchvalues='total')  #
+
+# Shows in a browser.
+treemap.show()  # it can be exported to .png or .jpeg from the browser view
+treemap.write_html('treemap1.html')  # a huge html file is produced
+
+
