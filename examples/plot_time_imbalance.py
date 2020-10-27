@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 '''
-This example script processes a single `.cubex` file, and shows the inclusive 
-time as a sunburst plot and as a treemap.
-The color of the plot elements is now dependent on the imbalance between ranks.
+This example script processes a single `.cubex` file, and shows the
+inclusive time as a sunburst plot and as a treemap.
+The color of the plot elements is now dependent on the imbalance between
+ ranks.
 
 Usage: ./example2.py <cubex file> 
 

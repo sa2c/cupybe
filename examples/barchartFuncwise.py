@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-##################################################################
+################################################################################
 #
-# Script for plotting score-p profile data using 'cupybe' library
+# Produces a bar chart plot of time spent (or some other metric) in the functions
+# called by a root function that can be chosen by name.
 #
 # Author    : Dr Chennakesava Kadapa
 # Date      : 02-Apr-2020
 # Copyright : @SA2C
-##################################################################
+################################################################################
 #
 # Usage:
 #
@@ -27,41 +28,30 @@ import index_conversions as ic
 import pandas as pd
 import matplotlib.pyplot as plt
 import calltree as ct
-import sys
 import os
-import numpy as np
 
 data_dir = "../test_data"
 inpfilename = os.path.join(data_dir, "profile-5m-nproc40-nsteps10.cubex")
 metric = "time"
 exclincl = False
-callpathid = 56
 
-#funcname = "MAIN__"
-funcname = "ns3d_"
+rootfuncname = "ns3d_"
 
-# get depth level for each function in the call tree
+### Processing
 
-call_tree = ct.get_call_tree(inpfilename)
+# Reading, parsing and loading data in the cubex file
+output_i = mg.process_cubex(inpfilename, exclusive=exclincl)
 
-#df = ct.calltree_to_df(call_tree).set_index('Cnode ID')
-
-#parent_series = df['Parent Cnode ID']
-
-#levels = ct.get_level(parent_series)
+call_tree = output_i.ctree
 
 func_node = next(
     node for node in ct.iterate_on_call_tree(call_tree)
-    if node.fname == funcname)
+    if node.fname == rootfuncname)
 
 children_info = [
     node.fname + "," + str(node.cnode_id)
     for node in ct.iterate_on_call_tree(func_node, 1)
 ]
-
-#####
-#
-output_i = mg.process_cubex(inpfilename, exclusive=exclincl)
 
 # We convert the Cnode IDs to short callpaths in the dataframe.
 df_i = ic.convert_index(
@@ -80,7 +70,7 @@ res = res.head(11 if len(res) > 11 else len(res)).tail(
 res.plot(kind='bar')
 
 plt.xlabel(
-    "Function name: " + funcname, fontsize=12, color='blue', fontweight='bold')
+    "Function name: " + rootfuncname, fontsize=12, color='blue', fontweight='bold')
 plt.title(
     "metric: " + metric + " " +
     ("(Exclusive)" if exclincl == True else "(Inclusive)"),
@@ -93,6 +83,5 @@ plt.tight_layout()
 plt.yscale('log')
 plt.ylim(10**1, 10**4)
 plt.xticks(rotation=80)
-#plt.show()
+plt.show()
 
-plt.savefig("FuncsVsMetric.png")

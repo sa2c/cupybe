@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 ##################################################################
 #
-# Script for plotting score-p profile data using 'cupybe' library
+# Similar to barchartLevelwise.py, but processes multiple `.cubex` files.
 #
 # Author    : Dr Chennakesava Kadapa
 # Date      : 02-Apr-2020
@@ -42,23 +42,19 @@ def get_metric_by_level(inpfilename):
     '''
     get depth level for each function in the call tree
     '''
-
-    call_tree = ct.get_call_tree(inpfilename)
-
-    df = ct.calltree_to_df(call_tree).set_index('Cnode ID')
-
-    parent_series = df['Parent Cnode ID']
-
-    levels = ct.get_level(parent_series)
-
-    #### get the data for the given metric
-    #
-    ######################################
+    print(f"Processing {inpfilename}")
 
     # This gives us a number of outputs
     # (see https://cupybelib.readthedocs.io/en/latest/merger.html)
-
     output_i = mg.process_cubex(inpfilename, exclusive=exclincl)
+
+    parent_series = (output_i
+                     .ctree_df
+                     .set_index('Cnode ID')
+                     .loc[:,'Parent Cnode ID'])
+
+    # get depth level for each function in the call tree
+    levels = ct.get_level(parent_series)
 
     # We convert the Cnode IDs to short callpaths in the dataframe.
     df_i = ic.convert_index(
@@ -71,7 +67,6 @@ def get_metric_by_level(inpfilename):
 
     res_df = pd.DataFrame(res)
 
-    #res_df.index = pd.MultiIndex.from_tuples(res_df.index.str.split(',').tolist())
     time = res_df.reset_index()['time']
     fname = res_df.reset_index()['Short Callpath'].str.extract(
         r'(\w+),([0-9]+)')[0]
@@ -79,28 +74,22 @@ def get_metric_by_level(inpfilename):
         r'(\w+),([0-9]+)')[1].astype(int)
 
     combined = pd.merge(
-        left=pd.concat([time, fname, cnode_id],
-                       axis='columns').rename({
-                           'time': 'time',
-                           0: 'fname',
-                           1: 'Cnode ID'
-                       },
-                                              axis='columns'),
+        left=(pd.concat([time, fname, cnode_id], axis='columns')
+              .rename({'time': 'time', 0: 'fname', 1: 'Cnode ID'},
+                      axis='columns')),
         right=levels.reset_index().rename({0: 'level'}, axis='columns'),
         on='Cnode ID')
 
-    #time_data = combined.sort_values(by = ['level','time']).head(10)
-
-    # to extract levels below third levels
-    time_data = combined[combined['level'] == 2].sort_values(
-        by=['level', 'time'], ascending=False)
+    # to extract functions called only at the 3rd level
+    time_data = (combined[combined['level'] == 2]
+                 .sort_values(by=['level', 'time'], ascending=False))
 
     return time_data
 
 
-##
 files = [
-    "profile-5m-nproc40-nsteps10.cubex", "profile-10m-nproc40-nsteps10.cubex",
+    "profile-5m-nproc40-nsteps10.cubex",
+    "profile-10m-nproc40-nsteps10.cubex",
     "profile-25m-nproc40-nsteps10.cubex"
 ]
 
@@ -108,11 +97,6 @@ time_data1, time_data2, time_data3 = [
     get_metric_by_level(os.path.join(data_dir, f)) for f in files
 ]
 
-print(time_data1)
-
-#time_data1.plot(kind='bar', x='fname', y='time')
-#time_data2.plot(kind='bar', x='fname', y='time')
-#time_data3.plot(kind='bar', x='fname', y='time')
 
 X = np.arange(len(time_data1))
 
@@ -144,6 +128,5 @@ else:
 plt.xticks(X, time_data1['fname'])
 plt.xticks(rotation=70)
 plt.tight_layout()
-#plt.show()
+plt.show()
 
-plt.savefig("FuncsVsMetric.png", dpi=200)

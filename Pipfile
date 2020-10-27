@@ -7,14 +7,15 @@ verify_ssl = true
 ipython = "*"
 
 [packages]
-pipenv = "*"
-pandas = ">1.0"
-yapf = "*"
-sphinx = "*"
-numpydoc = "*"
-sphinx-rtd-theme = "*"
 # Python >=3.6
-python-box = "*"
-plotly = "*"
 dash = "*"
+matplotlib = "*"
+numpydoc = "*"
+pandas = ">1.0"
+pipenv = "*"
+plotly = "*"
 pytest = "*"
+python-box = "*"
+sphinx = "*"
+sphinx-rtd-theme = "*"
+yapf = "*"

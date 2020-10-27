@@ -6,7 +6,6 @@ time as a sunburst plot.
 Usage: ./example1.py <cubex file> 
 
 if <cubex file> is not provided, '../test_data/profile.cubex' is used.
-
 '''
 import merger as mg
 import index_conversions as ic

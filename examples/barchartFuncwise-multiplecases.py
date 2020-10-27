@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 ##################################################################
 #
-# Script for plotting score-p profile data using 'cupybe' library
+# Variation of barchartFuncwise.py, where multiple `.cubex` files
+# are provided.
 #
 # Author    : Dr Chennakesava Kadapa
 # Date      : 20-Apr-2020
@@ -9,7 +10,8 @@
 ##################################################################
 #
 # Usage:
-# Provide the list of .cubex files you want to use. See line 80.
+# Provide the list of .cubex files you want to use: see line the
+# `data_filenames` list.
 #
 # python3 barchartFuncwise-multiplecases.py
 #
@@ -17,7 +19,7 @@
 #
 # python3 barchartFuncwise-multiplecases.py
 #
-################################################################################
+##################################################################
 
 import merger as mg
 import index_conversions as ic
@@ -26,7 +28,6 @@ import matplotlib.pyplot as plt
 import calltree as ct
 import sys
 import os
-import numpy as np
 
 metric = "visits"
 exclincl = False
@@ -43,6 +44,7 @@ def get_metric_by_function(inpfilename):
     '''
     get depth level for each function in the call tree
     '''
+    print(f"Processing {inpfilename}...")
 
     call_tree = ct.get_call_tree(inpfilename)
 
@@ -70,7 +72,6 @@ def get_metric_by_function(inpfilename):
     ]].groupby('Short Callpath').sum().sort_values([metric],
                                                    ascending=False)[metric]
 
-    #res = res.head( 11 if len(res) > 11 else len(res)).tail( 10 if len(res) > 10 else len(res)-1 )
     res = res.head(11 if len(res) > 11 else len(res))
 
     return res
@@ -88,9 +89,11 @@ data_file1, data_file2, data_file3 = [
     get_metric_by_function(f) for f in data_filenames
 ]
 
-# the sorted list of functions (wrt a metric) need not be the same in all the simulations)
-# to make sure that we correctly plot the corresponding values for a particular function from multiple simulations
-# let's create a new dataframe from the Series computed above for each simulation
+# The sorted list of functions (wrt a metric) need not be the
+# same in all the simulations.
+# To make sure that we correctly plot the corresponding values for a particular
+# function from multiple simulations let's create a new dataframe from the
+# Series computed above for each simulation.
 #
 df = pd.DataFrame({'M1': data_file1, 'M2': data_file2, 'M3': data_file3})
 
@@ -114,16 +117,11 @@ if (metric in metric_time_list):
     plt.yscale('log')
 elif (metric == "visits"):
     plt.ylabel("Number of visits", fontsize=12)
-#    plt.yscale('log')
-#    if(max(data[:,2]) > 10**4):
 else:
     print("Metric type not supported!")
     sys.exit()
 
-#plt.xticks(X, data_file1.index)
 plt.xticks(rotation=80)
 plt.tight_layout()
 
-figfilename = "FuncsVsMetric.png"
-print(f"Saving figure {figfilename}")
-plt.savefig(figfilename, dpi=200)
+plt.show()

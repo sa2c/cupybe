@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 ##################################################################
 #
-# Script for plotting score-p profile data using 'cupybe' library
+# Produces a bar chart plot that dieplays the time spent in the N
+# most expensive functions.
 #
 # Author    : Dr Chennakesava Kadapa
 # Date      : 02-Apr-2020
@@ -36,9 +37,6 @@ nfuncs = 10
 
 if len(sys.argv) > 1:
     inpfilename = sys.argv[1]
-else:
-    print("No input file specified!")
-    sys.exit()
 
 if len(sys.argv) > 2:
     metric = sys.argv[2]
@@ -51,8 +49,6 @@ if len(sys.argv) > 4:
 
 # This gives us a number of outputs
 # (see https://cupybe.readthedocs.io/en/latest/merger.html)
-#output_i = mg.process_cubex('../test_data/profile.cubex', exclusive=False)
-#output_i = mg.process_cubex('../test_data/profile-25m-nproc40-nsteps10.cubex', exclusive=True)
 
 output_i = mg.process_cubex(inpfilename, exclusive=exclincl)
 
@@ -61,26 +57,24 @@ df_i = ic.convert_index(
     output_i.df, output_i.ctree_df, target='Short Callpath')
 
 # We calculate the mean of the time
-#res = df_i.reset_index()[['Short Callpath', 'Thread ID', 'visits']].groupby('Short Callpath').sum().sort_values(['visits'])['visits'].tail(11).head(10)
 
-#res = df_i.reset_index()[['Short Callpath', 'Thread ID', 'max_time']].groupby('Short Callpath').sum().sort_values(['max_time'])['max_time'].tail(11).head(10)
+res = (df_i
+       .reset_index()[['Short Callpath', 'Thread ID', metric]]
+       .groupby('Short Callpath')
+       .sum()
+       .sort_values([metric], ascending=False)[metric]
+       .head(nfuncs))
 
-res = df_i.reset_index()[['Short Callpath', 'Thread ID',
-                          metric]].groupby('Short Callpath').sum().sort_values(
-                              [metric], ascending=False)[metric]
-
-res = res.head(nfuncs)
 
 print(res)
 
-res.plot(kind='bar')  #, x='Short Callpath', y='visits')
+res.plot(kind='bar')
 
 plt.xlabel("Function name", fontsize=14)
 plt.title(
     "metric=" + metric + " " +
     ("(Exclusive)" if exclincl == True else "(Inclusive)"),
     fontsize=14)
-#plt.legend('',frameon=False)
 
 metric_time_list = ["time", "max_time", "min_time"]
 
@@ -88,14 +82,11 @@ if (metric in metric_time_list):
     plt.ylabel("Time [s]", fontsize=14)
 elif (metric == "visits"):
     plt.ylabel("Number of visits", fontsize=14)
-#    plt.yscale('log')
-#    if(max(data[:,2]) > 10**4):
 else:
     print("Metric type not supported!")
     sys.exit()
 
 plt.xticks(rotation=70)
 plt.tight_layout()
-#plt.show()
+plt.show()
 
-plt.savefig("FuncsVsMetric.png")
