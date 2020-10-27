@@ -1,5 +1,5 @@
-``calltree``
-============
+The ``calltree`` module
+=======================
 .. automodule:: calltree
 .. currentmodule:: calltree
 .. _cube-tree-node:

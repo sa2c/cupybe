@@ -1,5 +1,6 @@
 """
-Utilities to merge the information that comes from multiple '.cubex' files
+Utilities to process the data from a single ``.cubex`` file, or merge the
+information that comes from multiple ``.cubex`` files.
 """
 import calltree as ct
 from itertools import combinations

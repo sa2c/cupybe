@@ -13,16 +13,17 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('../src'))
+sys.path.insert(0, os.path.abspath('../examples'))
 
 
 # -- Project information -----------------------------------------------------
 
 project = 'CuPyBe'
-copyright = '2020, Michele Mesiti & SA2C'
-author = 'Michele Mesiti & SA2C'
+copyright = '2020, SA2C'
+author = 'Michele Mesiti, Chennakesava Kadapa & SA2C'
 
 # The full version, including alpha/beta/rc tags
-release = '0.0.1'
+release = '0.9.0'
 
 
 # -- General configuration ---------------------------------------------------
