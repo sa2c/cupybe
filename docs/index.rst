@@ -7,7 +7,7 @@ CuPyBe documentation
 ====================
 
 **CuPyBe** is a collection of utilities that allow to convert the data contained
-in ``.cubex`` files produced by `Score-P<https://www.vi-hps.org/projects/score-p/>`  into data structures that can be
+in ``.cubex`` files produced by `Score-P <https://www.vi-hps.org/projects/score-p/>`_  into data structures that can be
 interacted with through Python libraries (e.g., Pandas).
 
 It is basically a bunch of functions that use ``cube_dump`` and parse its 
