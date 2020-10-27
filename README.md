@@ -33,3 +33,5 @@ For a solution that uses directly `tarfile` and `xml.etree.ElementTree` without 
 * Expand the possibilities for metric conversions (if asking `cube_dump` 
   directly for the inclusive metrics is not enough).
 
+## License
+CUPyBE is licensed according to the 3-clause license.

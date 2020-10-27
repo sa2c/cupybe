@@ -58,3 +58,8 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+License
++++++++
+
+CUPyBE is licensed according to the 3-clause license.
