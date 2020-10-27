@@ -1,6 +1,10 @@
 Examples
 ========
 
+A number of example scripts is available in the directory ``examples``.
+Here, a brief description of the example scritp follows.
+
+
 barchartCpathID.py
 --------------------------------------------------
 
@@ -55,3 +59,4 @@ time_imbalance_dashboard.py
 --------------------------------------------------
 
 .. automodule:: time_imbalance_dashboard
+
