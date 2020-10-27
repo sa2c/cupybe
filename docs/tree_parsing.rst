@@ -1,5 +1,5 @@
-``tree_parsing``
-================
+Tree parsing
+============
 
 .. automodule:: tree_parsing
 

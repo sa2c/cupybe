@@ -1,5 +1,5 @@
-``index_conversions``
-=====================
+Tools for index conversions
+===========================
 
 .. automodule:: index_conversions
 

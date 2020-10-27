@@ -42,19 +42,14 @@ Notes
   Anyway it is possible to ask ``cube_dump`` for the inclusive metrics if one 
   likes.
   
-Modules
-+++++++
+Table of content
+++++++++++++++++
 
 .. toctree::
    :maxdepth: 2
-
-   merger
-   calltree
-   cube_file_utils
-   metrics
-   calltree_conversions
-   index_conversions
-   tree_parsing
+     
+   modules
+   examples
 
 
 Indices and tables

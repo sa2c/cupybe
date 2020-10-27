@@ -1,5 +1,6 @@
-``calltree_conversions``
-========================
+
+Tools for call tree conversions
+===============================
 
 .. automodule:: calltree_conversions
 

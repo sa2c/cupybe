@@ -1,5 +1,5 @@
-``cube_file_utils``
-===================
+Utilities for dealing with ``.cubex`` files
+===========================================
 
 .. automodule:: cube_file_utils
 .. currentmodule:: cube_file_utils
