@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 ##################################################################
 #
-# Script for plotting score-p profile data using 'pycube' library
+# Script for plotting score-p profile data using 'cupybe' library
 #
 # Author    : Dr Chennakesava Kadapa
 # Date      : 02-Apr-2020
@@ -66,7 +66,7 @@ print('#' * 69)
 #### get the data for the given metric
 
 # This gives us a number of outputs
-# (see https://pycubelib.readthedocs.io/en/latest/merger.html)
+# (see https://cupybelib.readthedocs.io/en/latest/merger.html)
 
 output_i = mg.process_cubex(inpfilename, exclusive=exclincl)
 
