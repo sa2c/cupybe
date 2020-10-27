@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.abspath('../src'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'PyCube'
+project = 'CuPyBe'
 copyright = '2020, Michele Mesiti & SA2C'
 author = 'Michele Mesiti & SA2C'
 

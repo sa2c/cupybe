@@ -18,7 +18,7 @@ import pandas as pd
 from sys import argv
 
 # This gives us a number of outputs
-# (see https://pycubelib.readthedocs.io/en/latest/merger.html)
+# (see https://cupybelib.readthedocs.io/en/latest/merger.html)
 
 if len(argv) == 1:
     input_file = '../test_data/profile.cubex'

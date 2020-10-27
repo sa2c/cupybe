@@ -1,9 +1,15 @@
-# PyCUBE
+# CUPyBE
 
 This is a repository of python modules and function that can be used to 
-extract and organise data contained in '.cubex' files.
+extract and organise data contained in `.cubex` files, produced, e.g., by 
+[Score-P](https://www.vi-hps.org/projects/score-p/).
 
-The documentation is hosted on [readthedocs.io](https://pycubelib.readthedocs.io/en/latest/index.html).
+CUPyBE at the moment uses the command line tools from cubelib (see, e.g., 
+[Cube 4 downloads on scalasca.org](https://www.scalasca.org/scalasca/software/cube-4.x/download.html))
+to  extract information from `.cubex` files. 
+The documentation is hosted on [readthedocs.io](https://cupybe.readthedocs.io/en/latest/index.html).
+
+For a solution that uses directly `tarfile` and `xml.etree.ElementTree` without needing CubeLib, see [Marshall Ward's cubex project](https://github.com/marshallward/cubex), 
 
 ## Dependencies
 * Python >= 3.6. For packages, see `Pipfile`.

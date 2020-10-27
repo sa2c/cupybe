@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 '''
 This example reads the `.cubex` files containing PAPI counter values produced 
-by scalasca and combines them using PyCUBE.
+by scalasca and combines them using CUPyBE.
 Then, it creates some scatter plots (using matplotlib) which mimic the 
 roofline diagrams, estimating an arithmetic intensity-like and a FLOP-like 
 quantity from, respectively, load/store operations or cache reads and floating 
@@ -30,7 +30,7 @@ else:
     print("Opening dir", input_file)
 
 
-# Reading all cubex files and parsing them using pycube
+# Reading all cubex files and parsing them using cupybe
 # If this has already done, load the picked file instead for speed.
 files = glob(path.join(input_dir,'*','profile.cubex'))
 pickle_archive = path.join(input_dir,'data.pickle')
