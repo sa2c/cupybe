@@ -25,13 +25,9 @@ For a solution that uses directly `tarfile` and `xml.etree.ElementTree` without 
 * The project is not completed. While the main functionalities have been 
   implemented, the organisation of them into functions might not be optimal.
 
-## TODO
-* System tree:
-  The system tree should be easy to implement extending the same machinery
-  used for the call tree.
-
-* Expand the possibilities for metric conversions (if asking `cube_dump` 
-  directly for the inclusive metrics is not enough).
+## Issues and Bug reports
+For issues and bug reports, please either use the issue feature of GitHub or, if this is not possible or inconvenient, write an email to 
+the user `michele.mesiti` of the domain `swansea.ac.uk`.
 
 ## License
 CUPyBE is licensed according to the 3-clause license.
