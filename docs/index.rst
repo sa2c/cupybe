@@ -62,7 +62,7 @@ Indices and tables
 Issues and bug reports
 ++++++++++++++++++++++
 For issues and bug reports, please use the `Issue feature on GitHub <https://github.com/sa2c/cupybe/issues>`_. 
-In case this is inconveniente or not possible, write an email to `michele.mesiti` on the domain `swansea.ac.uk`.
+In case this is inconvenient or not possible, write an email to `michele.mesiti` on the domain `swansea.ac.uk`.
 
 License
 +++++++
